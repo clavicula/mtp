@@ -1,0 +1,10 @@
+<resources>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="pai_max_height">72px</dimen>
+    <dimen name="pai_max_width">24px</dimen>
+    <dimen name="scroll_field_right_margin">30dp</dimen>
+
+</resources>
