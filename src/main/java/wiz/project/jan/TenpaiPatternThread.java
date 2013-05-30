@@ -56,8 +56,8 @@ public final class TenpaiPatternThread extends Thread {
      */
     @Override
     public void run() {
-        HandUtil.removeEmptyJanPai(_hand);
-        _completed = HandUtil.isComplete(_hand);
+        JanPaiUtil.removeEmptyJanPai(_hand);
+        _completed = JanPaiUtil.isComplete(_hand);
         
         for (final JanPai pai : _hand.keySet()) {
             // 中断可能にしておく
@@ -66,10 +66,10 @@ public final class TenpaiPatternThread extends Thread {
             }
             
             final Map<JanPai, Integer> pattern = deepCopyMap(_hand);
-            HandUtil.removeJanPai(pattern, pai, 1);
-            final List<JanPai> completableList = HandUtil.getCompletable(pattern);
+            JanPaiUtil.removeJanPai(pattern, pai, 1);
+            final List<JanPai> completableList = JanPaiUtil.getCompletable(pattern);
             if (!completableList.isEmpty()) {
-                final int expectation = getExpectation(_hand, completableList);
+                final Map<JanPai, Integer> expectation = getExpectation(_hand, completableList);
                 _patternList.add(new TenpaiPattern(pai, completableList, expectation));
             }
         }
@@ -94,18 +94,18 @@ public final class TenpaiPatternThread extends Thread {
      * @param completableList 待ち牌リスト。
      * @return 期待枚数。
      */
-    private int getExpectation(final Map<JanPai, Integer> hand, final List<JanPai> completableList) {
-        int result = 0;
+    private Map<JanPai, Integer> getExpectation(final Map<JanPai, Integer> hand, final List<JanPai> completableList) {
+        final Map<JanPai, Integer> expectation = new TreeMap<JanPai, Integer>();
         for (final JanPai pai : completableList) {
             if (!hand.containsKey(pai)) {
-                result += 4;
+                expectation.put(pai, 4);
             }
             else {
                 final int count = hand.get(pai);
-                result += (4 - count);
+                expectation.put(pai, 4 - count);
             }
         }
-        return result;
+        return expectation;
     }
     
     

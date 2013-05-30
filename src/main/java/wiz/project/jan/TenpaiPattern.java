@@ -10,6 +10,8 @@ package wiz.project.jan;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 
@@ -25,7 +27,7 @@ public final class TenpaiPattern implements Serializable {
      * @param completableList 待ち牌リスト。
      * @param expectation 期待枚数。
      */
-    public TenpaiPattern(final JanPai discard, final List<JanPai> completableList, final int expectation) {
+    public TenpaiPattern(final JanPai discard, final List<JanPai> completableList, final Map<JanPai, Integer> expectation) {
         setDiscard(discard);
         setCompletableList(completableList);
         setExpectation(expectation);
@@ -80,8 +82,8 @@ public final class TenpaiPattern implements Serializable {
      * 
      * @return 期待枚数。
      */
-    public int getExpectation() {
-        return _expectation;
+    public Map<JanPai, Integer> getExpectation() {
+        return deepCopyMap(_expectation);
     }
     
     /**
@@ -91,7 +93,7 @@ public final class TenpaiPattern implements Serializable {
      */
     @Override
     public int hashCode() {
-        return _discard.hashCode() + _completableList.hashCode() + _expectation;
+        return _discard.hashCode() + _completableList.hashCode() + _expectation.hashCode();
     }
     
     /**
@@ -114,6 +116,16 @@ public final class TenpaiPattern implements Serializable {
      */
     private <E> List<E> deepCopyList(final List<E> sourceList) {
         return new ArrayList<E>(sourceList);
+    }
+    
+    /**
+     * マップをディープコピー
+     * 
+     * @param source 複製元。
+     * @return 複製結果。
+     */
+    private <S, T> Map<S, T> deepCopyMap(final Map<S, T> source) {
+        return new TreeMap<S, T>(source);
     }
     
     /**
@@ -147,14 +159,14 @@ public final class TenpaiPattern implements Serializable {
     /**
      * 期待枚数を設定
      * 
-     * @param value 期待枚数。
+     * @param expectation 期待枚数。
      */
-    private void setExpectation(final int value) {
-        if (value > 0) {
-            _expectation = value;
+    private void setExpectation(final Map<JanPai, Integer> expectation) {
+        if (expectation != null) {
+            _expectation = deepCopyMap(expectation);
         }
         else {
-            _expectation = 0;
+            _expectation.clear();
         }
     }
     
@@ -180,7 +192,7 @@ public final class TenpaiPattern implements Serializable {
     /**
      * 期待枚数
      */
-    private int _expectation = 0;
+    private Map<JanPai, Integer> _expectation = new TreeMap<JanPai, Integer>();
     
 }
 

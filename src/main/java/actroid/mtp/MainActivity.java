@@ -24,7 +24,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -44,27 +43,15 @@ public final class MainActivity extends Activity {
     }
     
     
-    
-    /**
-     * 画面回転時の処理
-     * 
-     * @param config 再描画パラメータ。
-     */
-    @Override
-    public void onConfigurationChanged(final Configuration config) {
-        super.onConfigurationChanged(config);
-    }
-    
-    
-    
+
     /**
      * 画面生成時の処理
      * 
-     * @param savedInstanceState 再起動パラメータ。
+     * @param savedState 保存済みの状態。
      */
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(final Bundle savedState) {
+        super.onCreate(savedState);
         setContentView(R.layout.activity_main);
         
         final UncaughtExceptionHandlerFactory factory = new UncaughtExceptionHandlerFactory();
@@ -76,6 +63,27 @@ public final class MainActivity extends Activity {
         initializeJanPaiButton();
         initializeClearButton();
         initializeCheckButton();
+    }
+    
+    /**
+     * 画面リロード時の状態保存
+     * 
+     * @param state 状態の保存先。
+     */
+    @Override
+    protected void onSaveInstanceState(final Bundle state) {
+        super.onSaveInstanceState(state);
+    }
+    
+    /**
+     * 画面リロード時の状態読み込み
+     * 
+     * @param savedState 保存済みの状態。
+     */
+    @Override
+    protected void onRestoreInstanceState(final Bundle savedState) {
+        super.onRestoreInstanceState(savedState);
+        updateHandView();
     }
     
     
@@ -149,7 +157,8 @@ public final class MainActivity extends Activity {
             }
             
             // バックグラウンドで処理しておく
-            _tenpaiPatternThread = new TenpaiPatternThread(_handManager.getPaiMap());
+            final Map<JanPai, Integer> hand = StatableHandManager.getInstance().getJanPaiMap();
+            _tenpaiPatternThread = new TenpaiPatternThread(hand);
             _tenpaiPatternThread.start();
         }
     }
@@ -159,7 +168,7 @@ public final class MainActivity extends Activity {
      */
     private void updateHandView() {
         int count = 0;
-        for (final JanPai pai : _handManager.getPaiList()) {
+        for (final JanPai pai : StatableHandManager.getInstance().getJanPaiList()) {
             HandView.getInstance().setButtonImage(count, pai);
             count++;
         }
@@ -178,19 +187,9 @@ public final class MainActivity extends Activity {
     
     
     /**
-     * ロックオブジェクト (手牌管理)
-     */
-    private final Object _HAND_MANAGER_LOCK = new Object();
-    
-    /**
-     * ロックオブジェクト (パターンスレッド)
+     * ロックオブジェクト
      */
     private final Object _PATTERN_THREAD_LOCK = new Object();
-    
-    /**
-     * 手牌管理
-     */
-    private final HandManager _handManager = new MenzenHandManager();
     
     /**
      * 聴牌パターン取得スレッド
@@ -216,11 +215,9 @@ public final class MainActivity extends Activity {
          * @param view リセットボタン。
          */
         public void onClick(final View view) {
-            synchronized (_HAND_MANAGER_LOCK) {
-                if (_handManager.getSize() > 0) {
-                    _handManager.clear();
-                    updateHandView();
-                }
+            if (StatableHandManager.getInstance().getSize() > 0) {
+                StatableHandManager.getInstance().clear();
+                updateHandView();
             }
         }
     }
@@ -247,11 +244,7 @@ public final class MainActivity extends Activity {
             
             boolean changeView = false;
             try {
-                final List<JanPai> paiList = new ArrayList<JanPai>();
-                synchronized (_HAND_MANAGER_LOCK) {
-                    paiList.addAll(_handManager.getPaiList());
-                }
-                
+                final List<JanPai> paiList = StatableHandManager.getInstance().getJanPaiList();
                 if (paiList.size() < 14) {
                     alert("少牌です");
                     return;
@@ -365,11 +358,9 @@ public final class MainActivity extends Activity {
                 return;
             }
             final JanPai pai = HandView.getInstance().getJanPai(_handID);
-            synchronized (_HAND_MANAGER_LOCK) {
-                if (_handManager.getSize() > 0) {
-                    _handManager.remove(pai);
-                    updateHandView();
-                }
+            if (StatableHandManager.getInstance().getSize() > 0) {
+                StatableHandManager.getInstance().remove(pai);
+                updateHandView();
             }
         }
         
@@ -399,11 +390,9 @@ public final class MainActivity extends Activity {
          * @param view 雀牌ボタン。
          */
         public void onClick(final View view) {
-            synchronized (_HAND_MANAGER_LOCK) {
-                if (_handManager.getSize() < 14) {
-                    _handManager.add(_pai);
-                    updateHandView();
-                }
+            if (StatableHandManager.getInstance().getSize() < 14) {
+                StatableHandManager.getInstance().add(_pai);
+                updateHandView();
             }
         }
         

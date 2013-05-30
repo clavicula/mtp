@@ -1,5 +1,5 @@
 /**
- * MenzenHandManager.java
+ * SerializableHandManager.java
  * 
  * @Author
  *   Yuki Kawata
@@ -7,25 +7,28 @@
 
 package actroid.mtp;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import wiz.project.jan.JanPai;
+import wiz.project.jan.MenTsu;
 
 
 
 /**
- * 面前手牌管理
+ * シリアライズ可能な手牌管理
  */
-class MenzenHandManager implements HandManager {
+class SerializableHandManager implements HandManager, Serializable {
     
     /**
      * コンストラクタ
      */
-    public MenzenHandManager() {
+    public SerializableHandManager() {
         clear();
     }
     
@@ -63,6 +66,13 @@ class MenzenHandManager implements HandManager {
     }
     
     /**
+     * 固定面子を追加
+     */
+    public void addFixedMenTsu(final MenTsu menTsu) {
+        _fixedMenTsuList.add(menTsu);
+    }
+    
+    /**
      * 手牌を全消去
      */
     public void clear() {
@@ -76,7 +86,7 @@ class MenzenHandManager implements HandManager {
      * 
      * @return 手牌リスト。
      */
-    public List<JanPai> getPaiList() {
+    public List<JanPai> getJanPaiList() {
         final List<JanPai> resultList = new ArrayList<JanPai>();
         for (final Map.Entry<JanPai, Integer> entry : _hand.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
@@ -91,7 +101,7 @@ class MenzenHandManager implements HandManager {
      * 
      * @return 手牌マップ。どの牌が何枚あるかを示す。
      */
-    public Map<JanPai, Integer> getPaiMap() {
+    public Map<JanPai, Integer> getJanPaiMap() {
         return deepCopyMap(_hand);
     }
     
@@ -149,8 +159,20 @@ class MenzenHandManager implements HandManager {
     
     
     /**
+     * シリアルID
+     */
+    private static final long serialVersionUID = 1L;
+    
+    
+    
+    /**
      * 手牌
      */
     private final Map<JanPai, Integer> _hand = Collections.synchronizedMap(new TreeMap<JanPai, Integer>());
+    
+    /**
+     * 固定面子リスト
+     */
+    private final List<MenTsu> _fixedMenTsuList = new CopyOnWriteArrayList<MenTsu>();
     
 }

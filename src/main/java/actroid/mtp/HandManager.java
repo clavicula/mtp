@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import wiz.project.jan.JanPai;
+import wiz.project.jan.MenTsu;
 
 
 
@@ -27,6 +28,13 @@ interface HandManager {
     public void add(final JanPai pai);
     
     /**
+     * 固定面子を追加
+     * 
+     * @param menTsu 固定面子。
+     */
+    public void addFixedMenTsu(final MenTsu menTsu);
+    
+    /**
      * 手牌を全消去
      */
     public void clear();
@@ -36,14 +44,14 @@ interface HandManager {
      * 
      * @return 理牌済みの手牌リスト。
      */
-    public List<JanPai> getPaiList();
+    public List<JanPai> getJanPaiList();
     
     /**
      * 手牌マップを取得
      * 
      * @return 各牌が何枚あるかを示す手牌マップ。
      */
-    public Map<JanPai, Integer> getPaiMap();
+    public Map<JanPai, Integer> getJanPaiMap();
     
     /**
      * 手牌の数を取得

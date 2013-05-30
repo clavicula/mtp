@@ -10,7 +10,7 @@ package wiz.project.jan;
 
 
 /**
- * 雀牌
+ * 牌
  */
 public enum JanPai {
     // 萬子
@@ -116,6 +116,68 @@ public enum JanPai {
             return SOU_9;
         default:
             return null;
+        }
+    }
+    
+    /**
+     * 牌タイプを取得
+     * 
+     * @return 牌タイプ
+     */
+    public JanPaiType getType() {
+        switch (this) {
+        case MAN_1:
+        case MAN_2:
+        case MAN_3:
+        case MAN_4:
+        case MAN_5:
+        case MAN_6:
+        case MAN_7:
+        case MAN_8:
+        case MAN_9:
+            return JanPaiType.MAN;
+        case PIN_1:
+        case PIN_2:
+        case PIN_3:
+        case PIN_4:
+        case PIN_5:
+        case PIN_6:
+        case PIN_7:
+        case PIN_8:
+        case PIN_9:
+            return JanPaiType.PIN;
+        case SOU_1:
+        case SOU_2:
+        case SOU_3:
+        case SOU_4:
+        case SOU_5:
+        case SOU_6:
+        case SOU_7:
+        case SOU_8:
+        case SOU_9:
+            return JanPaiType.SOU;
+        default:
+            return JanPaiType.JI;
+        }
+    }
+    
+    /**
+     * 字牌か
+     * 
+     * @return 判定結果。
+     */
+    public boolean isJi() {
+        switch (this) {
+        case TON:
+        case NAN:
+        case SHA:
+        case PEI:
+        case HAKU:
+        case HATU:
+        case CHUN:
+            return true;
+        default:
+            return false;
         }
     }
     

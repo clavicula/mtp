@@ -8,6 +8,7 @@
 package actroid.mtp;
 
 import java.util.List;
+import java.util.Map;
 
 import wiz.android.util.UncaughtExceptionHandlerFactory;
 import wiz.project.jan.JanPai;
@@ -15,6 +16,9 @@ import wiz.project.jan.TenpaiPattern;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -79,10 +83,10 @@ public final class ResultActivity extends Activity {
     private void addTenpaiPattern(final TenpaiPattern pattern) {
         final JanPai discard = pattern.getDiscard();
         final List<JanPai> completableList = pattern.getCompletableList();
-        final int expectation = pattern.getExpectation();
-        final LinearLayout discardView = createDiscardView(discard);
-        final LinearLayout completableView = createCompletableView(completableList, completableList.contains(discard));
-        final LinearLayout expectationView = createExpectationView(expectation);
+        final Map<JanPai, Integer> expectation = pattern.getExpectation();
+        final View discardView = createDiscardView(discard);
+        final View completableView = createCompletableView(completableList, expectation, completableList.contains(discard));
+        final View expectationView = createExpectationView(expectation);
         
         // 上下に余白を設ける
         discardView.setPadding(0, 20, 0, 0);
@@ -97,18 +101,24 @@ public final class ResultActivity extends Activity {
      * 待ち牌ビューを生成
      * 
      * @param completableList 待ち牌リスト。
+     * @param expectation 期待枚数。
      * @param poor フリテンか。
      * @return 待ち牌ビュー。
      */
-    private LinearLayout createCompletableView(final List<JanPai> completableList, final boolean poor) {
+    private View createCompletableView(final List<JanPai> completableList, final Map<JanPai, Integer> expectation, final boolean poor) {
         final LinearLayout view = new LinearLayout(this);
         view.setOrientation(LinearLayout.HORIZONTAL);
+        view.setGravity(Gravity.BOTTOM);
         for (final JanPai pai : completableList) {
             view.addView(createJanPaiImageView(pai));
+            view.addView(createTextView(expectation.get(pai) + " "));
         }
         final String text = poor ? "待ち [フリテン]" : "待ち";
         view.addView(createTextView(text));
-        return view;
+        
+        final HorizontalScrollView scroll = new HorizontalScrollView(this);
+        scroll.addView(view);
+        return scroll;
     }
     
     /**
@@ -117,9 +127,10 @@ public final class ResultActivity extends Activity {
      * @param pai 捨て牌。
      * @return 捨て牌ビュー。
      */
-    private LinearLayout createDiscardView(final JanPai pai) {
+    private View createDiscardView(final JanPai pai) {
         final LinearLayout view = new LinearLayout(this);
         view.setOrientation(LinearLayout.HORIZONTAL);
+        view.setGravity(Gravity.BOTTOM);
         view.addView(createJanPaiImageView(pai));
         view.addView(createTextView("切り"));
         return view;
@@ -128,10 +139,15 @@ public final class ResultActivity extends Activity {
     /**
      * 期待枚数ビューを生成
      */
-    private LinearLayout createExpectationView(final int expectation) {
+    private View createExpectationView(final Map<JanPai, Integer> expectation) {
         final LinearLayout view = new LinearLayout(this);
         view.setOrientation(LinearLayout.HORIZONTAL);
-        view.addView(createTextView("期待枚数 ： " + expectation));
+        
+        int total = 0;
+        for (final Map.Entry<JanPai, Integer> entry : expectation.entrySet()) {
+            total += entry.getValue();
+        }
+        view.addView(createTextView("合計期待枚数 ： " + total));
         return view;
     }
     
@@ -141,7 +157,7 @@ public final class ResultActivity extends Activity {
      * @param pai 生成元雀牌。
      * @return 牌画像ビュー。
      */
-    private ImageView createJanPaiImageView(final JanPai pai) {
+    private View createJanPaiImageView(final JanPai pai) {
         final ImageView view = new ImageView(this);
         view.setImageBitmap(ImageResourceManager.getInstance().getImage(pai));
         return view;
@@ -153,7 +169,7 @@ public final class ResultActivity extends Activity {
      * @param text 生成元テキスト。
      * @return テキストビュー。
      */
-    private TextView createTextView(final String text) {
+    private View createTextView(final String text) {
         final TextView view = new TextView(this);
         view.setText(text);
         return view;
