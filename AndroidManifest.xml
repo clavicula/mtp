@@ -23,7 +23,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="ResultActivity" android:label="@string/app_name"></activity>
+        <activity android:name="actroid.mtp.ResultActivity" android:label="@string/app_name"></activity>
+        <activity android:name="actroid.mtp.call.CallChiActivity" android:label="@string/app_name"></activity>
+        <activity android:name="actroid.mtp.call.CallPonActivity" android:label="@string/app_name"></activity>
+        <activity android:name="actroid.mtp.call.CallKanLightActivity" android:label="@string/app_name"></activity>
+        <activity android:name="actroid.mtp.call.CallKanDarkActivity" android:label="@string/app_name"></activity>
     </application>
 
 </manifest>

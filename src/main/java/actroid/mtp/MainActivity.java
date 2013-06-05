@@ -10,16 +10,20 @@ package actroid.mtp;
 
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
-import wiz.android.util.AlertFactory;
+import wiz.android.util.DialogFactory;
+import wiz.android.util.JoinProgressThread;
 import wiz.android.util.ProgressThread;
 import wiz.android.util.UncaughtExceptionHandlerFactory;
+import wiz.project.jan.Hand;
 import wiz.project.jan.JanPai;
 import wiz.project.jan.TenpaiPattern;
 import wiz.project.jan.TenpaiPatternThread;
+import actroid.mtp.call.CallDialogFactory;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -34,7 +38,7 @@ import android.widget.ImageButton;
 /**
  * 手牌入力画面
  */
-public final class MainActivity extends Activity {
+public final class MainActivity extends Activity implements Observer {
     
     /**
      * コンストラクタ
@@ -43,11 +47,45 @@ public final class MainActivity extends Activity {
     }
     
     
-
+    
+    /**
+     * 更新通知時の処理
+     * 
+     * @param subject 監視対象。
+     * @param param 通知パラメータ。
+     */
+    public void update(final Observable subject, final Object param) {
+        if (!(param instanceof Hand)) {
+            return;
+        }
+        
+        final Hand hand = (Hand)param;
+        final int usable = hand.getUsableSize();
+        switch (usable) {
+        case 0:
+            // 手牌が全て埋まっている
+            ButtonManager.getInstance().enable(R.id.button_check);
+            ButtonManager.getInstance().disable(R.id.button_call);
+            updateTenpaiPattern(hand);
+            break;
+        case 1:
+        case 2:
+            // 手牌に空きがあるが、副露不可
+            ButtonManager.getInstance().disable(R.id.button_check);
+            ButtonManager.getInstance().disable(R.id.button_call);
+            break;
+        default:
+            // 手牌に空きがあり、副露可能
+            ButtonManager.getInstance().disable(R.id.button_check);
+            ButtonManager.getInstance().enable(R.id.button_call);
+            break;
+        }
+    }
+    
+    
+    
     /**
      * 画面生成時の処理
-     * 
-     * @param savedState 保存済みの状態。
      */
     @Override
     protected void onCreate(final Bundle savedState) {
@@ -59,16 +97,17 @@ public final class MainActivity extends Activity {
         
         // 初期化順を変更してはならない
         initializeResourceManager();
-        initializeHandView();
+        
         initializeJanPaiButton();
         initializeClearButton();
         initializeCheckButton();
+        initializeCallButton();
+        
+        initializeHandView();
     }
     
     /**
      * 画面リロード時の状態保存
-     * 
-     * @param state 状態の保存先。
      */
     @Override
     protected void onSaveInstanceState(final Bundle state) {
@@ -77,23 +116,44 @@ public final class MainActivity extends Activity {
     
     /**
      * 画面リロード時の状態読み込み
-     * 
-     * @param savedState 保存済みの状態。
      */
     @Override
     protected void onRestoreInstanceState(final Bundle savedState) {
         super.onRestoreInstanceState(savedState);
-        updateHandView();
+        HandManager.getInstance().updateView();
     }
     
     
     
     /**
+     * 警告ダイアログ
+     * 
+     * @param message 警告メッセージ。
+     */
+    private void alert(final String message) {
+        final DialogFactory factory = new DialogFactory();
+        final AlertDialog dialog =
+            factory.createSimpleAlert(this, MTPConst.APP_NAME, message);
+        dialog.show();
+    }
+    
+    /**
+     * 副露ボタンを初期化
+     */
+    private void initializeCallButton() {
+        final Button button = (Button)findViewById(R.id.button_call);
+        button.setOnClickListener(new CallButtonListener());
+        ButtonManager.getInstance().addButton(button);
+    }
+    
+    /**
      * 確認ボタンを初期化
      */
     private void initializeCheckButton() {
-        CheckButtonManager.getInstance().initialize(this);
-        CheckButtonManager.getInstance().setOnClickListener(new CheckButtonListener());
+        final Button button = (Button)findViewById(R.id.button_check);
+        button.setOnClickListener(new CheckButtonListener());
+        ButtonManager.getInstance().addButton(button);
+        ButtonManager.getInstance().disable(R.id.button_check);
     }
     
     /**
@@ -108,13 +168,8 @@ public final class MainActivity extends Activity {
      * 手牌ビューを初期化
      */
     private void initializeHandView() {
-        final List<ImageButton> handButtonList = new ArrayList<ImageButton>();
-        for (final int handID : MTPConst.HAND_BUTTON_ID_LIST) {
-            final ImageButton button = (ImageButton)findViewById(handID);
-            button.setOnClickListener(new HandButtonListener(handID));
-            handButtonList.add(button);
-        }
-        HandView.getInstance().initialize(handButtonList);
+        HandManager.getInstance().initialize(this, this);
+        HandManager.getInstance().updateView();
     }
     
     /**
@@ -135,14 +190,22 @@ public final class MainActivity extends Activity {
     }
     
     /**
+     * 進捗ダイアログを表示しつつ同期
+     * 
+     * @param thread 同期対象スレッド。
+     */
+    private void joinWithProgressDialog(final Thread thread) {
+        final ProgressThread progress = new JoinProgressThread(thread);
+        progress.show(this);
+    }
+    
+    /**
      * 待ち牌判定結果を表示
      * 
-     * @param hand 手牌。
      * @param patternList パターン。
      */
-    private void showResultPattern(final List<JanPai> hand, final List<TenpaiPattern> patternList) {
+    private void showResultPattern(final List<TenpaiPattern> patternList) {
         final Intent intent = new Intent(MainActivity.this, ResultActivity.class);
-        intent.putExtra(MTPConst.KEY_HAND, (Serializable)hand);
         intent.putExtra(MTPConst.KEY_TENPAI_PATTERN, (Serializable)patternList);
         startActivity(intent);
     }
@@ -150,46 +213,26 @@ public final class MainActivity extends Activity {
     /**
      * 聴牌パターンを更新
      */
-    private void updateTenpaiPattern() {
+    private void updateTenpaiPattern(final Hand hand) {
         synchronized (_PATTERN_THREAD_LOCK) {
             if (_tenpaiPatternThread != null) {
                 _tenpaiPatternThread.interrupt();
             }
             
             // バックグラウンドで処理しておく
-            final Map<JanPai, Integer> hand = StatableHandManager.getInstance().getJanPaiMap();
             _tenpaiPatternThread = new TenpaiPatternThread(hand);
             _tenpaiPatternThread.start();
         }
     }
     
-    /**
-     * 手牌表示を更新
-     */
-    private void updateHandView() {
-        int count = 0;
-        for (final JanPai pai : StatableHandManager.getInstance().getJanPaiList()) {
-            HandView.getInstance().setButtonImage(count, pai);
-            count++;
-        }
-        
-        if (count == 14) {
-            updateTenpaiPattern();
-        }
-        else {
-            // 合計14牌になるまで牌裏で埋める
-            for (int i = count; i < 14; i++) {
-                HandView.getInstance().clearButtonImage(i);
-            }
-        }
-    }
-    
     
     
     /**
-     * ロックオブジェクト
+     * ロックオブジェクト (聴牌パターン取得スレッド)
      */
     private final Object _PATTERN_THREAD_LOCK = new Object();
+    
+    
     
     /**
      * 聴牌パターン取得スレッド
@@ -199,26 +242,26 @@ public final class MainActivity extends Activity {
     
     
     /**
-     * リセットボタンリスナー
+     * 副露ボタンリスナー
      */
-    private final class ClearButtonListener implements View.OnClickListener {
+    private final class CallButtonListener implements View.OnClickListener {
         
         /**
          * コンストラクタ
          */
-        public ClearButtonListener() {
+        public CallButtonListener() {
         }
         
         /**
          * クリック時の処理
-         * 
-         * @param view リセットボタン。
          */
         public void onClick(final View view) {
-            if (StatableHandManager.getInstance().getSize() > 0) {
-                StatableHandManager.getInstance().clear();
-                updateHandView();
-            }
+            // ボタン連打対策
+            ButtonManager.getInstance().lock(R.id.button_call);
+            
+            final CallDialogFactory factory = new CallDialogFactory();
+            final AlertDialog dialog = factory.create(MainActivity.this);
+            dialog.show();
         }
     }
     
@@ -235,29 +278,21 @@ public final class MainActivity extends Activity {
         
         /**
          * クリック時の処理
-         * 
-         * @param view 確認ボタン。
          */
         public void onClick(final View view) {
-            // 確認ボタンの連打対策
-            CheckButtonManager.getInstance().lock();
+            // ボタン連打対策
+            ButtonManager.getInstance().lock(R.id.button_check);
             
             boolean changeView = false;
             try {
-                final List<JanPai> paiList = StatableHandManager.getInstance().getJanPaiList();
-                if (paiList.size() < 14) {
-                    alert("少牌です");
-                    return;
-                }
-                
                 synchronized (_PATTERN_THREAD_LOCK) {
                     if (_tenpaiPatternThread == null) {
                         // 14牌あるのにスレッドが作動していない
                         throw new IllegalStateException("Pattern thread is null.");
                     }
-                    
-                    final ProgressThread progress = new JoinProgressThread(_tenpaiPatternThread);
-                    progress.show(MainActivity.this);
+                    if (!_tenpaiPatternThread.isFinished()) {
+                        joinWithProgressDialog(_tenpaiPatternThread);
+                    }
                     
                     final List<TenpaiPattern> patternList = _tenpaiPatternThread.getPatternList();
                     if (patternList.isEmpty()) {
@@ -269,33 +304,22 @@ public final class MainActivity extends Activity {
                     if (_tenpaiPatternThread.isCompleted()) {
                         final DialogInterface.OnClickListener onOK = new DialogInterface.OnClickListener() {
                             public void onClick(final DialogInterface dialog, final int selected) {
-                                showResultPattern(paiList, patternList);
+                                showResultPattern(patternList);
                             }
                         };
-                        final DialogInterface.OnClickListener onCancel = new CancelButtonListener();
+                        final DialogFactory.CancelListener onCancel = new CancelListener();
                         confirm("和了済みです。\n判定しますか？", onOK, onCancel);
                     }
                     else {
-                        showResultPattern(paiList, patternList);
+                        showResultPattern(patternList);
                     }
                 }
             }
             finally {
                 if (!changeView) {
-                    CheckButtonManager.getInstance().unlock();
+                    ButtonManager.getInstance().unlock(R.id.button_check);
                 }
             }
-        }
-        
-        /**
-         * 警告ダイアログ
-         * 
-         * @param message 警告メッセージ。
-         */
-        private void alert(final String message) {
-            final AlertFactory factory = new AlertFactory();
-            final AlertDialog dialog = factory.createSimpleAlert(MainActivity.this, MTPConst.APP_NAME, message);
-            dialog.show();
         }
         
         /**
@@ -304,76 +328,73 @@ public final class MainActivity extends Activity {
          * @param message 確認メッセージ。
          * @param onOK OKボタン押下時の処理。
          */
-        private void confirm(final String message, final DialogInterface.OnClickListener onOK, final DialogInterface.OnClickListener onCancel) {
-            final AlertFactory factory = new AlertFactory();
-            final AlertDialog dialog = factory.createConfirmAlert(MainActivity.this, MTPConst.APP_NAME, message, onOK, onCancel);
+        private void confirm(final String message, final DialogInterface.OnClickListener onOK, final DialogFactory.CancelListener onCancel) {
+            final DialogFactory factory = new DialogFactory();
+            final AlertDialog dialog = factory.createConfirmAlert(MainActivity.this, MTPConst.APP_NAME, message, onCancel, onOK);
             dialog.show();
         }
         
         /**
-         * キャンセルボタンリスナー
+         * キャンセル処理リスナー
          */
-        private final class CancelButtonListener implements DialogInterface.OnClickListener {
+        private final class CancelListener implements DialogFactory.CancelListener {
             
             /**
              * コンストラクタ
              */
-            public CancelButtonListener() {
+            public CancelListener() {
             }
             
             /**
-             * クリック時の処理
-             * 
-             * @param dialog 確認ダイアログ。
-             * @param selected ボタンID。
+             * リスナー名を取得
              */
-            public void onClick(final DialogInterface dialog, final int selected) {
-                CheckButtonManager.getInstance().unlock();
+            public String getName() {
+                return "キャンセル";
+            }
+            
+            /**
+             * キャンセル時の処理
+             */
+            public void onCancel(final DialogInterface dialog) {
+                ButtonManager.getInstance().unlock(R.id.button_check);
             }
         };
-        
     }
     
     /**
-     * 手牌ボタンリスナー
+     * リセットボタンリスナー
      */
-    private final class HandButtonListener implements View.OnClickListener {
+    private static final class ClearButtonListener implements View.OnClickListener {
         
         /**
          * コンストラクタ
-         * 
-         * @param handID 手牌ID。
          */
-        public HandButtonListener(final int handID) {
-            _handID = handID;
+        public ClearButtonListener() {
         }
         
         /**
          * クリック時の処理
-         * 
-         * @param view 手牌ボタン。
          */
         public void onClick(final View view) {
-            if (!HandView.getInstance().hasJanPai(_handID)) {
-                return;
+            boolean cleared = false;
+            if (HandManager.getInstance().getMenZenSize() > 0) {
+                HandManager.getInstance().clearMenZenHand();
+                cleared = true;
             }
-            final JanPai pai = HandView.getInstance().getJanPai(_handID);
-            if (StatableHandManager.getInstance().getSize() > 0) {
-                StatableHandManager.getInstance().remove(pai);
-                updateHandView();
+            if (HandManager.getInstance().getFixedMenTsuCount() > 0) {
+                HandManager.getInstance().clearFixedMenTzu();
+                cleared = true;
+            }
+            if (cleared) {
+                HandManager.getInstance().updateView();
             }
         }
-        
-        /**
-         * 手牌ID
-         */
-        private final int _handID;
     }
     
     /**
      * 雀牌ボタンリスナー
      */
-    private final class JanPaiButtonListener implements View.OnClickListener {
+    private static final class JanPaiButtonListener implements View.OnClickListener {
         
         /**
          * コンストラクタ
@@ -386,55 +407,23 @@ public final class MainActivity extends Activity {
         
         /**
          * クリック時の処理
-         * 
-         * @param view 雀牌ボタン。
          */
         public void onClick(final View view) {
-            if (StatableHandManager.getInstance().getSize() < 14) {
-                StatableHandManager.getInstance().add(_pai);
-                updateHandView();
+            if (HandManager.getInstance().isLimitSize()) {
+                return;
             }
+            final int count = HandManager.getInstance().getJanPaiCount(_pai);
+            if (count >= 4) {
+                return;
+            }
+            HandManager.getInstance().addJanPai(_pai);
+            HandManager.getInstance().updateView();
         }
         
         /**
          * 牌の種類
          */
         private final JanPai _pai;
-    }
-    
-    /**
-     * 同期進捗スレッド
-     */
-    private static final class JoinProgressThread extends ProgressThread {
-        
-        /**
-         * コンストラクタ
-         * 
-         * @param thread 同期対象スレッド。
-         */
-        public JoinProgressThread(final Thread thread) {
-            if (thread == null) {
-                throw new NullPointerException("Target thread is null.");
-            }
-            _thread = thread;
-        }
-        
-        /**
-         * 進捗ダイアログ表示中の処理
-         */
-        protected void backgroundProcess() {
-            try {
-                _thread.join();
-            }
-            catch (final InterruptedException e) {
-                // 何もしない
-            }
-        }
-        
-        /**
-         * 同期対象スレッド
-         */
-        private final Thread _thread;
     }
     
 }

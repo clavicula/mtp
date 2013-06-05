@@ -45,7 +45,7 @@ public class UncaughtExceptionHandlerFactory {
                     return;
                 }
                 
-                final AlertFactory factory = new AlertFactory();
+                final DialogFactory factory = new DialogFactory();
                 final AlertDialog dialog = factory.createSimpleAlert(activity, "Error", e.getMessage());
                 dialog.show();
                 

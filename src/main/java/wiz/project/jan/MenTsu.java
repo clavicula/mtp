@@ -83,12 +83,37 @@ public final class MenTsu {
     }
     
     /**
+     * 牌枚数を取得
+     * 
+     * @return 牌枚数。
+     */
+    public int getSize() {
+        return _sourceList.size();
+    }
+    
+    /**
      * 牌リストを取得
      * 
      * @return 牌リスト。
      */
     public List<JanPai> getSource() {
         return deepCopyList(_sourceList);
+    }
+    
+    /**
+     * 指定牌の所持数を取得
+     * 
+     * @param pai 検索対象。
+     * @return 所持数。
+     */
+    public int getJanPaiCount(final JanPai pai) {
+        int count = 0;
+        for (final JanPai source : _sourceList) {
+            if (source == pai) {
+                count++;
+            }
+        }
+        return count;
     }
     
     /**

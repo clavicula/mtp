@@ -120,6 +120,66 @@ public enum JanPai {
     }
     
     /**
+     * 前の牌を取得
+     * 
+     * @return 前の牌。存在しなければnullを返す。
+     */
+    public JanPai getPrev() {
+        switch (this) {
+        case MAN_2:
+            return MAN_1;
+        case MAN_3:
+            return MAN_2;
+        case MAN_4:
+            return MAN_3;
+        case MAN_5:
+            return MAN_4;
+        case MAN_6:
+            return MAN_5;
+        case MAN_7:
+            return MAN_6;
+        case MAN_8:
+            return MAN_7;
+        case MAN_9:
+            return MAN_8;
+        case PIN_2:
+            return PIN_1;
+        case PIN_3:
+            return PIN_2;
+        case PIN_4:
+            return PIN_3;
+        case PIN_5:
+            return PIN_4;
+        case PIN_6:
+            return PIN_5;
+        case PIN_7:
+            return PIN_6;
+        case PIN_8:
+            return PIN_7;
+        case PIN_9:
+            return PIN_8;
+        case SOU_2:
+            return SOU_1;
+        case SOU_3:
+            return SOU_2;
+        case SOU_4:
+            return SOU_3;
+        case SOU_5:
+            return SOU_4;
+        case SOU_6:
+            return SOU_5;
+        case SOU_7:
+            return SOU_6;
+        case SOU_8:
+            return SOU_7;
+        case SOU_9:
+            return SOU_8;
+        default:
+            return null;
+        }
+    }
+    
+    /**
      * 牌タイプを取得
      * 
      * @return 牌タイプ

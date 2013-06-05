@@ -6,5 +6,7 @@
     <dimen name="pai_max_height">72px</dimen>
     <dimen name="pai_max_width">24px</dimen>
     <dimen name="scroll_field_right_margin">30dp</dimen>
+    <dimen name="button_spacing">15dp</dimen>
+    <dimen name="pai_stack_max_height">104px</dimen>
 
 </resources>

@@ -14,7 +14,7 @@ import android.app.ProgressDialog;
 /**
  * 進捗スレッド
  */
-public abstract class ProgressThread extends Thread {
+public abstract class ProgressThread {
     
     /**
      * コンストラクタ
@@ -27,7 +27,7 @@ public abstract class ProgressThread extends Thread {
      * 
      * @param style 表示スタイル。
      */
-    public ProgressThread(final int style) {
+    public ProgressThread(final ProgressDialogStyle style) {
         setStyle(style);
     }
     
@@ -39,22 +39,13 @@ public abstract class ProgressThread extends Thread {
      * @param activity 親画面。
      * @throws RuntimeException 進捗表示中の処理が中断された。
      */
-    public void show(final Activity activity) throws RuntimeException {
+    public final void show(final Activity activity) throws RuntimeException {
         if (activity == null) {
             throw new NullPointerException("Activity is null.");
         }
         
-        final ProgressDialog dialog = new ProgressDialog(activity);
-        dialog.setIndeterminate(true);
-        dialog.setProgressStyle(_style);
-        dialog.show();
-        final Thread thread = new Thread() {
-            @Override
-            public void run() {
-                backgroundProcess();
-                dialog.dismiss();
-            }
-        };
+        final ProgressDialog dialog = createProgressDialog(activity);
+        final Thread thread = createCoreThread(dialog);
         thread.start();
         
         try {
@@ -75,18 +66,49 @@ public abstract class ProgressThread extends Thread {
     
     
     /**
+     * 中核処理スレッドを生成
+     * 
+     * @param dialog 中核処理中に表示する進捗ダイアログ。
+     * @return 中核処理スレッド。
+     */
+    private Thread createCoreThread(final ProgressDialog dialog) {
+        return new Thread() {
+            /**
+             * 処理を実行
+             */
+            @Override
+            public void run() {
+                backgroundProcess();
+                dialog.dismiss();
+            }
+        };
+    }
+    
+    /**
+     * 進捗ダイアログを生成
+     * 
+     * @param activity 親画面。
+     * @return 進捗ダイアログ。
+     */
+    private ProgressDialog createProgressDialog(final Activity activity) {
+        final ProgressDialog dialog = new ProgressDialog(activity);
+        dialog.setIndeterminate(true);
+        dialog.setProgressStyle(_style);
+        dialog.show();
+        return dialog;
+    }
+    
+    /**
      * 表示スタイルを設定
      * 
      * @param style 表示スタイル。
      */
-    private void setStyle(final int style) {
-        switch (style) {
-        case ProgressDialog.STYLE_SPINNER:
-        case ProgressDialog.STYLE_HORIZONTAL:
-            _style = style;
-            break;
-        default:
-            throw new IllegalArgumentException("Invalid style.");
+    private void setStyle(final ProgressDialogStyle style) {
+        if (style != null) {
+            _style = style.toCode();
+        }
+        else {
+            _style = ProgressDialog.STYLE_SPINNER;
         }
     }
     

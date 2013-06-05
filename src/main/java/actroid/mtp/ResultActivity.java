@@ -7,11 +7,14 @@
 
 package actroid.mtp;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import wiz.android.util.UncaughtExceptionHandlerFactory;
 import wiz.project.jan.JanPai;
+import wiz.project.jan.MenTsu;
 import wiz.project.jan.TenpaiPattern;
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -19,10 +22,10 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.HorizontalScrollView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ImageView.ScaleType;
 
 
 
@@ -41,8 +44,6 @@ public final class ResultActivity extends Activity {
     
     /**
      * 画面生成時の処理
-     * 
-     * @param savedInstanceState 再起動パラメータ。
      */
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -53,8 +54,8 @@ public final class ResultActivity extends Activity {
         Thread.setDefaultUncaughtExceptionHandler(factory.create(this));
         
         // 初期化順を変更してはならない
-        final List<JanPai> hand = getCreateParam(MTPConst.KEY_HAND);
-        initializeHandView(hand);
+        initializeHandView();
+        initializeFixedMenTsuView();
         
         final List<TenpaiPattern> patternList = getCreateParam(MTPConst.KEY_TENPAI_PATTERN);
         synchronized (_PATTERN_VIEW_LOCK) {
@@ -69,8 +70,8 @@ public final class ResultActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         
-        // 確認ボタンをクリック可能にする
-        CheckButtonManager.getInstance().unlock();
+        // メイン画面の確認ボタンをクリック可能にする
+        ButtonManager.getInstance().unlock(R.id.button_check);
     }
     
     
@@ -152,6 +153,63 @@ public final class ResultActivity extends Activity {
     }
     
     /**
+     * 手牌ビューを生成
+     * 
+     * @param index 手牌インデックス。
+     * @param image 手牌画像。
+     * @return 手牌画像ビュー。
+     */
+    private ImageView createHandView(final int index, final Bitmap image) {
+        final ImageView view = new ImageView(this);
+        view.setId(MTPConst.HAND_VIEW_RESULT_BASE_ID + index);
+        view.setLayoutParams(createHandViewParam());
+        view.setScaleType(ScaleType.FIT_CENTER);
+        view.setImageBitmap(image);
+        return view;
+    }
+    
+    /**
+     * 確定面子ビューのパラメータを生成
+     * 
+     * @return 確定面子ビューのパラメータ。
+     */
+    private LinearLayout.LayoutParams createFixedMenTsuViewParam() {
+        final LinearLayout.LayoutParams param =
+            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                                          LinearLayout.LayoutParams.WRAP_CONTENT);
+        param.weight = 1.0f;
+        param.gravity = Gravity.BOTTOM;
+        return param;
+    }
+    
+    /**
+     * 手牌ビューのパラメータを生成
+     * 
+     * @return 手牌ビューのパラメータ。
+     */
+    private LinearLayout.LayoutParams createHandViewParam() {
+        final LinearLayout.LayoutParams param =
+            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                                          LinearLayout.LayoutParams.MATCH_PARENT);
+        param.weight = 1.0f;
+        return param;
+    }
+    
+    /**
+     * 不可視牌ビューを生成
+     * 
+     * @return 不可視牌ビュー。
+     */
+    private ImageView createInvisiblePaiView() {
+        final ImageView view = new ImageView(this);
+        view.setLayoutParams(createHandViewParam());
+        view.setScaleType(ScaleType.FIT_CENTER);
+        view.setImageBitmap(ImageResourceManager.getInstance().getBlankImage());
+        view.setVisibility(View.INVISIBLE);
+        return view;
+    }
+    
+    /**
      * 牌画像ビューを生成
      * 
      * @param pai 生成元雀牌。
@@ -176,6 +234,15 @@ public final class ResultActivity extends Activity {
     }
     
     /**
+     * ビュー生成オブジェクトを生成
+     * 
+     * @return ビュー生成オブジェクト。
+     */
+    private JanPaiViewFactory createJanPaiViewFactory() {
+        return new JanPaiViewFactory(this);
+    }
+    
+    /**
      * 画面生成パラメータを取得
      * 
      * @param key パラメータキー。
@@ -191,21 +258,54 @@ public final class ResultActivity extends Activity {
     }
     
     /**
-     * 手牌ビューを初期化
-     * 
-     * @param hand 手牌。
+     * 確定面子ビューを初期化
      */
-    private void initializeHandView(final List<JanPai> hand) {
-        final int size = hand.size();
-        if (size > 14) {
-            throw new IllegalArgumentException("Invalid hand size - " + size);
+    private void initializeFixedMenTsuView() {
+        int count = 0;
+        final JanPaiViewFactory factory = createJanPaiViewFactory();
+        final LinearLayout.LayoutParams layoutParam = createFixedMenTsuViewParam();
+        final List<List<ImageView>> viewList = new ArrayList<List<ImageView>>();
+        for (final MenTsu menTsu : HandManager.getInstance().getFixedMenTsuList()) {
+            final int menTsuID = MTPConst.FIXED_VIEW_RESULT_BASE_ID + count;
+            final List<ImageView> view = factory.createMenTsuView(menTsu, menTsuID, layoutParam);
+            view.get(0).setPadding(10, 0, 0, 0);
+            viewList.add(view);
+            count++;
         }
-        for (int i = 0; i < size; i++) {
-            final int handID = MTPConst.RESULT_HAND_ID_LIST.get(i);
-            final ImageButton button = (ImageButton)findViewById(handID);
-            final JanPai pai = hand.get(i);
+        
+        for (; count < 4; count++) {
+            // 常に四副露時のサイズで画像を表示するため、不可視のビューを追加
+            final List<ImageView> view = factory.createInvisibleMenTsuView(layoutParam);
+            view.get(0).setPadding(10, 0, 0, 0);
+            viewList.add(view);
+        }
+        
+        // 最初に副露した面子が右に来るように逆順ソート
+        Collections.reverse(viewList);
+        final LinearLayout fixedMenTsuView = (LinearLayout)findViewById(R.id.result_fixed_layout);
+        for (final List<ImageView> view : viewList) {
+            for (final ImageView pai : view) {
+                fixedMenTsuView.addView(pai);
+            }
+        }
+    }
+    
+    /**
+     * 手牌ビューを初期化
+     */
+    private void initializeHandView() {
+        final LinearLayout handView = (LinearLayout)findViewById(R.id.result_hand_layout);
+        int count = 0;
+        for (final JanPai pai : HandManager.getInstance().getMenZenList()) {
             final Bitmap image = ImageResourceManager.getInstance().getImage(pai);
-            button.setImageBitmap(image);
+            final ImageView view = createHandView(count, image);
+            handView.addView(view);
+            count++;
+        }
+        
+        for (; count < 14; count++) {
+            // 常に14牌時のサイズで画像を表示するため、不可視のビューを追加
+            handView.addView(createInvisiblePaiView());
         }
     }
     

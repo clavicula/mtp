@@ -4,20 +4,6 @@
     <string name="app_name">めんたんぴん</string>
     <string name="action_settings">Settings</string>
     <string name="select_hand">手牌入力</string>
-    <string name="hand_01">手牌01</string>
-    <string name="hand_02">手牌02</string>
-    <string name="hand_03">手牌03</string>
-    <string name="hand_04">手牌04</string>
-    <string name="hand_05">手牌05</string>
-    <string name="hand_06">手牌06</string>
-    <string name="hand_07">手牌07</string>
-    <string name="hand_08">手牌08</string>
-    <string name="hand_09">手牌09</string>
-    <string name="hand_10">手牌10</string>
-    <string name="hand_11">手牌11</string>
-    <string name="hand_12">手牌12</string>
-    <string name="hand_13">手牌13</string>
-    <string name="hand_14">手牌14</string>
     <string name="pai_man_1">一萬</string>
     <string name="pai_man_2">二萬</string>
     <string name="pai_man_3">三萬</string>
@@ -52,10 +38,21 @@
     <string name="pai_haku">白</string>
     <string name="pai_hatu">發</string>
     <string name="pai_chun">中</string>
-    <string name="button_dummy">ダミー</string>
     <string name="button_check">リーチ！</string>
     <string name="button_clear">リセット</string>
     <string name="result_hand">手牌</string>
     <string name="result_pattern">聴牌パターン</string>
+    <string name="button_call">副露</string>
+    <string name="button_blank">blank</string>
+    <string name="button_call_chi">チー</string>
+    <string name="button_call_pon">ポン</string>
+    <string name="button_call_kan_light">明カン</string>
+    <string name="button_call_kan_dark">暗カン</string>
+    <string name="button_call_cancel">キャンセル</string>
+    <string name="button_call_ok">確定</string>
+    <string name="call_chi_select">チー： 先頭牌選択</string>
+    <string name="call_pon_select">ポン： 牌選択</string>
+    <string name="call_kan_light_select">明カン： 牌選択</string>
+    <string name="call_kan_dark_select">暗カン： 牌選択</string>
 
 </resources>

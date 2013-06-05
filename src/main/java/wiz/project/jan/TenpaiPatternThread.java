@@ -24,11 +24,11 @@ public final class TenpaiPatternThread extends Thread {
     /**
      * コンストラクタ
      */
-    public TenpaiPatternThread(final Map<JanPai, Integer> hand) {
+    public TenpaiPatternThread(final Hand hand) {
         if (hand == null) {
             throw new NullPointerException("Hand is null.");
         }
-        _hand.putAll(hand);
+        _hand = hand;
     }
     
     
@@ -52,40 +52,42 @@ public final class TenpaiPatternThread extends Thread {
     }
     
     /**
+     * 判定済みか
+     * 
+     * @return 判定結果。
+     */
+    public boolean isFinished() {
+        return _finished;
+    }
+    
+    /**
      * 処理を実行
      */
     @Override
     public void run() {
-        JanPaiUtil.removeEmptyJanPai(_hand);
-        _completed = JanPaiUtil.isComplete(_hand);
+        final Map<JanPai, Integer> menZen = _hand.getMenZenMap();
+        JanPaiUtil.removeEmptyJanPai(menZen);
+        _completed = JanPaiUtil.isComplete(menZen);
         
-        for (final JanPai pai : _hand.keySet()) {
+        for (final JanPai pai : menZen.keySet()) {
             // 中断可能にしておく
             if (interrupted()) {
                 return;
             }
             
-            final Map<JanPai, Integer> pattern = deepCopyMap(_hand);
-            JanPaiUtil.removeJanPai(pattern, pai, 1);
+            final Hand pattern = _hand.clone();
+            pattern.removeJanPai(pai);
             final List<JanPai> completableList = JanPaiUtil.getCompletable(pattern);
             if (!completableList.isEmpty()) {
                 final Map<JanPai, Integer> expectation = getExpectation(_hand, completableList);
                 _patternList.add(new TenpaiPattern(pai, completableList, expectation));
             }
         }
+        
+        _finished = true;
     }
     
     
-    
-    /**
-     * マップをディープコピー
-     * 
-     * @param source 複製元マップ。
-     * @return 複製結果。
-     */
-    private <S, T> Map<S, T> deepCopyMap(final Map<S, T> source) {
-        return new TreeMap<S, T>(source);
-    }
     
     /**
      * 期待枚数を取得
@@ -94,16 +96,12 @@ public final class TenpaiPatternThread extends Thread {
      * @param completableList 待ち牌リスト。
      * @return 期待枚数。
      */
-    private Map<JanPai, Integer> getExpectation(final Map<JanPai, Integer> hand, final List<JanPai> completableList) {
+    private Map<JanPai, Integer> getExpectation(final Hand hand, final List<JanPai> completableList) {
+        final Map<JanPai, Integer> source = hand.getAllJanPaiMap();
         final Map<JanPai, Integer> expectation = new TreeMap<JanPai, Integer>();
         for (final JanPai pai : completableList) {
-            if (!hand.containsKey(pai)) {
-                expectation.put(pai, 4);
-            }
-            else {
-                final int count = hand.get(pai);
-                expectation.put(pai, 4 - count);
-            }
+            final int count = source.get(pai);
+            expectation.put(pai, 4 - count);
         }
         return expectation;
     }
@@ -113,12 +111,17 @@ public final class TenpaiPatternThread extends Thread {
     /**
      * 手牌
      */
-    private final Map<JanPai, Integer> _hand = new TreeMap<JanPai, Integer>();
+    private final Hand _hand;
     
     /**
      * 和了済みか
      */
     private volatile boolean _completed = false;
+    
+    /**
+     * 判定済みか
+     */
+    private volatile boolean _finished = false;
     
     /**
      * 聴牌パターンリスト

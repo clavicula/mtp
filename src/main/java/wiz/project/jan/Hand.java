@@ -8,8 +8,9 @@
 package wiz.project.jan;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 
@@ -22,32 +23,49 @@ public final class Hand implements Cloneable {
      * コンストラクタ
      */
     public Hand() {
+        initializeCore();
     }
     
     /**
      * コンストラクタ
      * 
-     * @param head 雀頭。
-     * @param menTsuList 面子リスト。
-     * @param extraList 浮き牌リスト。
+     * @param menZen 面前手牌。
      */
-    public Hand(final JanPai head, final List<MenTsu> menTsuList, final List<JanPai> extraList) {
-        setHead(head);
-        setMenTsuList(menTsuList);
-        setExtraList(extraList);
+    public Hand(final List<JanPai> menZen) {
+        this();
+        setJanPaiList(menZen);
     }
     
     /**
      * コンストラクタ
      * 
-     * @param head 雀頭。
-     * @param menTsuList 面子リスト。
-     * @param extraList 浮き牌リスト。
+     * @param menZen 面前手牌。
      */
-    public Hand(final List<JanPai> head, final List<MenTsu> menTsuList, final List<JanPai> extraList) {
-        setHead(head);
-        setMenTsuList(menTsuList);
-        setExtraList(extraList);
+    public Hand(final Map<JanPai, Integer> menZen) {
+        this();
+        setJanPaiMap(menZen);
+    }
+    
+    /**
+     * コンストラクタ
+     * 
+     * @param menZen 面前手牌。
+     * @param fixedMenTsuList 確定面子リスト。
+     */
+    public Hand(final List<JanPai> menZen, final List<MenTsu> fixedMenTsuList) {
+        this(menZen);
+        setFixedMenTsuList(fixedMenTsuList);
+    }
+    
+    /**
+     * コンストラクタ
+     * 
+     * @param menZen 面前手牌。
+     * @param fixedMenTsuList 確定面子リスト。
+     */
+    public Hand(final Map<JanPai, Integer> menZen, final List<MenTsu> fixedMenTsuList) {
+        this(menZen);
+        setFixedMenTsuList(fixedMenTsuList);
     }
     
     /**
@@ -57,9 +75,8 @@ public final class Hand implements Cloneable {
      */
     public Hand(final Hand source) {
         if (source != null) {
-            setHead(source._head);
-            setMenTsuList(source._menTsuList);
-            setExtraList(source._extraList);
+            _core = deepCopyMap(source._core);
+            _fixedMenTsuList = deepCopyList(source._fixedMenTsuList);
         }
     }
     
@@ -94,81 +111,135 @@ public final class Hand implements Cloneable {
         }
         
         final Hand targetHand = (Hand)target;
-        return _head.equals(targetHand._head) &&
-               _menTsuList.equals(targetHand._menTsuList) &&
-               _extraList.equals(targetHand._extraList);
+        return _core.equals(targetHand._core) &&
+               _fixedMenTsuList.equals(targetHand._fixedMenTsuList);
     }
     
     /**
-     * 浮き牌を追加
+     * 確定面子を追加
      * 
-     * @param pai 浮き牌。
+     * @param menTsu 確定面子。
      */
-    public void addExtra(final JanPai pai) {
-        if (pai != null) {
-            _extraList.add(pai);
-        }
-    }
-    
-    /**
-     * 面子を追加
-     * 
-     * @param menTsu 面子。
-     */
-    public void addMenTsu(final MenTsu menTsu) {
+    public void addFixedMenTsu(final MenTsu menTsu) {
         if (menTsu != null) {
-            _menTsuList.add(menTsu);
+            _fixedMenTsuList.add(menTsu);
         }
+    }
+    
+    /**
+     * 牌を追加
+     * 
+     * @param pai 追加する牌。
+     */
+    public void addJanPai(final JanPai pai) {
+        if (pai == null) {
+            return;
+        }
+        
+        if (isLimitSize()) {
+            return;
+        }
+        if (getJanPaiCount(pai) >= 4) {
+            return;
+        }
+        JanPaiUtil.addJanPai(_core, pai, 1);
     }
     
     /**
      * フィールドを全消去
      */
     public void clear() {
-        _head.clear();
-        _menTsuList.clear();
-        _extraList.clear();
+        clearMenZenHand();
+        clearFixedMenTsuList();
     }
     
     /**
-     * 浮き牌を全消去
+     * 面前手牌を全消去
      */
-    public void clearExtraList() {
-        _extraList.clear();
+    public void clearMenZenHand() {
+        initializeCore();
     }
     
     /**
-     * 面子を全消去
+     * 確定面子を全消去
      */
-    public void clearMenTsuList() {
-        _menTsuList.clear();
+    public void clearFixedMenTsuList() {
+        _fixedMenTsuList.clear();
     }
     
     /**
-     * 浮き牌リストを取得
+     * 全ての牌マップを取得
      * 
-     * @return 浮き牌リスト。
+     * @return 全ての牌マップ。
      */
-    public List<JanPai> getExtraList() {
-        return deepCopyList(_extraList);
+    public Map<JanPai, Integer> getAllJanPaiMap() {
+        final Map<JanPai, Integer> result = deepCopyMap(_core);
+        for (final MenTsu menTsu : _fixedMenTsuList) {
+            for (final JanPai pai : menTsu.getSource()) {
+                JanPaiUtil.addJanPai(result, pai, 1);
+            }
+        }
+        return result;
     }
     
     /**
-     * 雀頭を取得
+     * 確定面子数を取得
      * 
-     * @return 雀頭。
+     * @return 確定面子数。
      */
-    public List<JanPai> getHead() {
-        return deepCopyList(_head);
+    public int getFixedMenTsuCount() {
+        return _fixedMenTsuList.size();
     }
     
     /**
-     * 面子リストを取得
+     * 確定面子リストを取得
      * 
-     * @return 面子リスト。
+     * @return 確定面子リスト。
      */
-    public List<MenTsu> getMenTsuList() {
-        return deepCopyList(_menTsuList);
+    public List<MenTsu> getFixedMenTsuList() {
+        return deepCopyList(_fixedMenTsuList);
+    }
+    
+    /**
+     * 指定牌の所持数を取得
+     * 
+     * @param pai 検索対象。
+     * @return 所持数。
+     */
+    public int getJanPaiCount(final JanPai pai) {
+        int count = _core.get(pai);
+        for (final MenTsu menTsu : _fixedMenTsuList) {
+            count += menTsu.getJanPaiCount(pai);
+        }
+        return count;
+    }
+    
+    /**
+     * 面前手牌の上限枚数を取得
+     * 
+     * @return 面前手牌の上限枚数。
+     */
+    public int getLimitSize() {
+        final int fixedCount = _fixedMenTsuList.size() * 3;
+        return 14 - fixedCount;
+    }
+    
+    /**
+     * 面前手牌リストを取得
+     * 
+     * @return 面前手牌リスト。
+     */
+    public List<JanPai> getMenZenList() {
+        return JanPaiUtil.convertJanPaiMap(_core);
+    }
+    
+    /**
+     * 面前手牌マップを取得
+     * 
+     * @return 面前手牌マップ。
+     */
+    public Map<JanPai, Integer> getMenZenMap() {
+        return deepCopyMap(_core);
     }
     
     /**
@@ -176,9 +247,17 @@ public final class Hand implements Cloneable {
      * 
      * @return 面前手牌枚数。
      */
-    public int getMenZenCount() {
-        // TODO 鳴き面子の考慮
-        return _head.size() + (_menTsuList.size() * 3) + _extraList.size();
+    public int getMenZenSize() {
+        return JanPaiUtil.getJanPaiCount(_core);
+    }
+    
+    /**
+     * 空き枚数を取得
+     * 
+     * @return 空き枚数。
+     */
+    public int getUsableSize() {
+        return 14 - ((_fixedMenTsuList.size() * 3) + getMenZenSize());
     }
     
     /**
@@ -188,82 +267,90 @@ public final class Hand implements Cloneable {
      */
     @Override
     public int hashCode() {
-        return _head.hashCode() + _menTsuList.hashCode() + _extraList.hashCode();
+        return _core.hashCode() + _fixedMenTsuList.hashCode();
     }
     
     /**
-     * 指定牌を持っているか
+     * 面前手牌の枚数上限に達しているか
      * 
-     * @param target 検索対象。
      * @return 判定結果。
      */
-    public boolean hasJanPai(final JanPai target) {
-        if (_head.contains(target)) {
-            return true;
-        }
-        for (final MenTsu menTsu : _menTsuList) {
-            if (menTsu.hasJanPai(target)) {
-                return true;
-            }
-        }
-        return _extraList.contains(target);
+    public boolean isLimitSize() {
+        final int menZenCount = JanPaiUtil.getJanPaiCount(_core);
+        return menZenCount >= getLimitSize();
     }
     
     /**
-     * 浮き牌リストを設定
+     * 確定面子を削除
      * 
-     * @param extraList 浮き牌リスト。
+     * @param index 面子インデックス。
      */
-    public void setExtraList(final List<JanPai> extraList) {
-        if (extraList != null) {
-            _extraList = deepCopyList(extraList);
+    public void removeFixedMenTsu(final int index) {
+        if (index < 0) {
+            return;
         }
-        else {
-            _extraList.clear();
+        if (index >= _fixedMenTsuList.size()) {
+            return;
         }
+        _fixedMenTsuList.remove(index);
     }
     
     /**
-     * 雀頭を設定
+     * 牌を削除
      * 
-     * @param head 雀頭牌。
+     * @param pai 削除する牌。
      */
-    public void setHead(final JanPai head) {
-        if (head != null) {
-            for (int i = 0; i < 2; i++) {
-                _head.add(head);
-            }
+    public void removeJanPai(final JanPai pai) {
+        if (pai == null) {
+            return;
         }
-        else {
-            _head.clear();
+        
+        final int count = _core.get(pai);
+        if (count == 0) {
+            return;
         }
+        _core.put(pai, count - 1);
     }
     
     /**
-     * 雀頭を設定
-     * 
-     * @param head 雀頭。
-     */
-    public void setHead(final List<JanPai> head) {
-        if (head != null) {
-            _head = deepCopyList(head);
-        }
-        else {
-            _head.clear();
-        }
-    }
-    
-    /**
-     * 面子リストを設定
+     * 確定面子リストを設定
      * 
      * @param menTsuList 面子リスト。
      */
-    public void setMenTsuList(final List<MenTsu> menTsuList) {
+    public void setFixedMenTsuList(final List<MenTsu> menTsuList) {
         if (menTsuList != null) {
-            _menTsuList = deepCopyList(menTsuList);
+            _fixedMenTsuList = deepCopyList(menTsuList);
         }
         else {
-            _menTsuList.clear();
+            _fixedMenTsuList.clear();
+        }
+    }
+    
+    /**
+     * 牌リストを設定
+     * 
+     * @param sourceList 牌リスト。
+     */
+    public void setJanPaiList(final List<JanPai> sourceList) {
+        initializeCore();
+        if (sourceList != null) {
+            for (final JanPai source : sourceList) {
+                JanPaiUtil.addJanPai(_core, source, 1);
+            }
+        }
+    }
+    
+    /**
+     * 牌マップを設定
+     * 
+     * @param source 牌マップ。
+     */
+    public void setJanPaiMap(final Map<JanPai, Integer> source) {
+        initializeCore();
+        if (source != null) {
+            for (final Map.Entry<JanPai, Integer> entry : source.entrySet()) {
+                JanPaiUtil.addJanPai(_core, entry.getKey(), entry.getValue());
+            }
         }
     }
     
@@ -273,13 +360,10 @@ public final class Hand implements Cloneable {
      * @return 変換結果。
      */
     public List<JanPai> toList() {
-        final List<JanPai> resultList = new ArrayList<JanPai>();
-        resultList.addAll(_head);
-        for (final MenTsu menTsu : _menTsuList) {
+        final List<JanPai> resultList = JanPaiUtil.convertJanPaiMap(_core);
+        for (final MenTsu menTsu : _fixedMenTsuList) {
             resultList.addAll(menTsu.getSource());
         }
-        resultList.addAll(_extraList);
-        Collections.sort(resultList);
         return resultList;
     }
     
@@ -290,10 +374,30 @@ public final class Hand implements Cloneable {
      */
     @Override
     public String toString() {
-        return toList().toString();
+        final StringBuilder buf = new StringBuilder();
+        for (final JanPai pai : JanPaiUtil.convertJanPaiMap(_core)) {
+            buf.append(pai);
+        }
+        for (final MenTsu menTsu : _fixedMenTsuList) {
+            buf.append(" ");
+            for (final JanPai pai : menTsu.getSource()) {
+                buf.append(pai);
+            }
+        }
+        return buf.toString();
     }
     
     
+    
+    /**
+     * 牌マップを全消去
+     */
+    private void initializeCore() {
+        _core.clear();
+        for (final JanPai pai : JanPai.values()) {
+            _core.put(pai, 0);
+        }
+    }
     
     /**
      * リストをディープコピー
@@ -305,22 +409,27 @@ public final class Hand implements Cloneable {
         return new ArrayList<E>(sourceList);
     }
     
+    /**
+     * マップをディープコピー
+     * 
+     * @param source 複製元マップ。
+     * @return 複製結果。
+     */
+    private <S, T> Map<S, T> deepCopyMap(final Map<S, T> source) {
+        return new TreeMap<S, T>(source);
+    }
+    
     
     
     /**
-     * 雀頭
+     * 牌マップ
      */
-    private List<JanPai> _head = new ArrayList<JanPai>();
+    private Map<JanPai, Integer> _core = new TreeMap<JanPai, Integer>();
     
     /**
-     * 面子リスト
+     * 確定面子リスト
      */
-    private List<MenTsu> _menTsuList = new ArrayList<MenTsu>();
-    
-    /**
-     * 浮き牌リスト
-     */
-    private List<JanPai> _extraList = new ArrayList<JanPai>();
+    private List<MenTsu> _fixedMenTsuList = new ArrayList<MenTsu>();
     
 }
 

@@ -9,164 +9,31 @@
     android:orientation="vertical" >
     
     <TextView
-	        android:id="@+id/text_result_hand"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_marginLeft="5dp"
-	        android:text="@string/result_hand"
-	        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:id="@+id/text_result_hand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:text="@string/result_hand"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
     
 	<LinearLayout
+	    android:id="@+id/result_hand_layout"
         android:layout_width="match_parent"
         android:layout_height="@dimen/pai_max_height"
         android:layout_marginTop="5dp"
         android:layout_marginRight="@dimen/scroll_field_right_margin"
-        android:layout_marginBottom="20dp"
-        android:orientation="horizontal" >
-        
-	    <ImageButton
-	        android:id="@+id/result_hand_01"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_01"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_02"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_02"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
+        android:gravity="left"
+        android:orientation="horizontal" />
 	
-	    <ImageButton
-	        android:id="@+id/result_hand_03"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_03"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-		
-	    <ImageButton
-	        android:id="@+id/result_hand_04"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_04"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-		
-	    <ImageButton
-	        android:id="@+id/result_hand_05"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_05"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-		
-	    <ImageButton
-	        android:id="@+id/result_hand_06"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_06"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_07"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_07"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_08"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_08"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	   
-	    <ImageButton
-	        android:id="@+id/result_hand_09"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_09"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_10"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_10"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_11"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_11"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_12"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_12"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_13"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_13"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-	    
-	    <ImageButton
-	        android:id="@+id/result_hand_14"
-	        android:layout_width="0dp"
-	        android:layout_height="match_parent"
-	        android:layout_weight="1"
-	        android:background="@null"
-	        android:contentDescription="@string/hand_14"
-	        android:scaleType="fitCenter"
-	        android:src="@drawable/ura" />
-    
-    </LinearLayout>
-    
-	
+    <LinearLayout
+        android:id="@+id/result_fixed_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginRight="@dimen/scroll_field_right_margin"
+        android:layout_marginTop="5dp"
+        android:gravity="bottom|right"
+        android:orientation="horizontal" />
 	
 	<TextView
 	        android:id="@+id/text_result_pattern"

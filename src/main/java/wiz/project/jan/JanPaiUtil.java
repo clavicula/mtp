@@ -64,7 +64,7 @@ public final class JanPaiUtil {
      * @param hand 手牌。
      * @return 判定結果。
      */
-    public static boolean canTenpai(final Map<JanPai, Integer> hand) {
+    public static boolean canTenpai(final Hand hand) {
         return !getTenpaiPatternList(hand).isEmpty();
     }
     
@@ -158,19 +158,21 @@ public final class JanPaiUtil {
      * @param hand 手牌。
      * @return 待ち牌リスト。
      */
-    public static List<JanPai> getCompletable(final Map<JanPai, Integer> hand) {
+    public static List<JanPai> getCompletable(final Hand hand) {
         if (hand == null) {
             throw new NullPointerException("Hand is null.");
         }
         
         final List<JanPai> resultList = new ArrayList<JanPai>();
+        final Map<JanPai, Integer> source = hand.getMenZenMap();
+        removeEmptyJanPai(source);
         for (final JanPai pai : JanPai.values()) {
-            if (hand.containsKey(pai) && hand.get(pai) >= 4) {
+            if (hand.getJanPaiCount(pai) >= 4) {
                 // 既に4牌持っている
                 continue;
             }
             
-            final Map<JanPai, Integer> pattern = deepCopyMap(hand);
+            final Map<JanPai, Integer> pattern = deepCopyMap(source);
             addJanPai(pattern, pai, 1);
             if (isComplete(pattern)) {
                 resultList.add(pai);
@@ -186,7 +188,7 @@ public final class JanPaiUtil {
      * @param completableList 待ち牌リスト。
      * @return 期待枚数。
      */
-    public static Map<JanPai, Integer> getExpectation(final Map<JanPai, Integer> hand, final List<JanPai> completableList) {
+    public static Map<JanPai, Integer> getExpectation(final Hand hand, final List<JanPai> completableList) {
         if (hand == null) {
             throw new NullPointerException("Hand is null.");
         }
@@ -194,15 +196,11 @@ public final class JanPaiUtil {
             throw new NullPointerException("Completable list is null.");
         }
         
+        final Map<JanPai, Integer> source = hand.getAllJanPaiMap();
         final Map<JanPai, Integer> expectation = new TreeMap<JanPai, Integer>();
         for (final JanPai pai : completableList) {
-            if (!hand.containsKey(pai)) {
-                expectation.put(pai, 4);
-            }
-            else {
-                final int count = hand.get(pai);
-                expectation.put(pai, 4 - count);
-            }
+            final int count = source.get(pai);
+            expectation.put(pai, 4 - count);
         }
         return expectation;
     }
@@ -230,6 +228,20 @@ public final class JanPaiUtil {
             }
         }
         return resultList;
+    }
+    
+    /**
+     * 総枚数をカウント
+     * 
+     * @param source カウント元。
+     * @return 総枚数。
+     */
+    public static int getJanPaiCount(final Map<JanPai, Integer> source) {
+        int total = 0;
+        for (final int count : source.values()) {
+            total += count;
+        }
+        return total;
     }
     
     /**
@@ -452,15 +464,17 @@ public final class JanPaiUtil {
      * @param hand 手牌。
      * @return 聴牌パターンリスト。
      */
-    public static List<TenpaiPattern> getTenpaiPatternList(final Map<JanPai, Integer> hand) {
+    public static List<TenpaiPattern> getTenpaiPatternList(final Hand hand) {
         if (hand == null) {
             throw new NullPointerException("Hand is null.");
         }
         
         final List<TenpaiPattern> resultList = new ArrayList<TenpaiPattern>();
-        for (final JanPai pai : hand.keySet()) {
-            final Map<JanPai, Integer> pattern = deepCopyMap(hand);
-            removeJanPai(pattern, pai, 1);
+        final Map<JanPai, Integer> menZen = hand.getMenZenMap();
+        removeEmptyJanPai(menZen);
+        for (final JanPai pai : menZen.keySet()) {
+            final Hand pattern = hand.clone();
+            pattern.removeJanPai(pai);
             final List<JanPai> completableList = getCompletable(pattern);
             if (!completableList.isEmpty()) {
                 final Map<JanPai, Integer> expectation = getExpectation(hand, completableList);
@@ -472,7 +486,7 @@ public final class JanPaiUtil {
     
     /**
      * 和了判定
-     * 
+     *
      * @param hand 手牌。
      * @return 判定結果。
      */
@@ -482,7 +496,17 @@ public final class JanPaiUtil {
         }
         
         final List<Map<JanPai, Integer>> excludeHeadPattern = getExcludeHeadPattern(hand);
+        if (excludeHeadPattern.isEmpty()) {
+            // 雀頭候補が存在しない
+            return false;
+        }
+        
         for (final Map<JanPai, Integer> pattern : excludeHeadPattern) {
+            if (pattern.isEmpty()) {
+            // 裸単騎状態で和了
+                return true;
+            }
+            
             final Map<JanPai, Integer> copy = deepCopyMap(pattern);
             
             // 順子優先パターン
@@ -516,7 +540,7 @@ public final class JanPaiUtil {
      * @param hand 手牌。
      * @return 判定結果。
      */
-    public static boolean isTenpai(final Map<JanPai, Integer> hand) {
+    public static boolean isTenpai(final Hand hand) {
         return !getCompletable(hand).isEmpty();
     }
     
