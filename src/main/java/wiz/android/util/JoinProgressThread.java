@@ -20,9 +20,7 @@ public class JoinProgressThread extends ProgressThread {
      * @param thread 同期対象スレッド。
      */
     public JoinProgressThread(final Thread thread) {
-        synchronized (_THREAD_LOCK) {
-            setThread(thread);
-        }
+        _thread = thread;
     }
     
     
@@ -30,12 +28,11 @@ public class JoinProgressThread extends ProgressThread {
     /**
      * 進捗ダイアログ表示中の処理
      */
+    @Override
     protected void backgroundProcess() {
         try {
-            synchronized (_THREAD_LOCK) {
-                if (_thread != null) {
-                    _thread.join();
-                }
+            if (_thread != null) {
+                _thread.join();
             }
         }
         catch (final InterruptedException e) {
@@ -46,26 +43,8 @@ public class JoinProgressThread extends ProgressThread {
     
     
     /**
-     * 同期対象スレッドを設定
-     * 
-     * @param thread 同期対象スレッド。
-     */
-    private void setThread(final Thread thread) {
-        _thread = thread;
-    }
-    
-    
-    
-    /**
-     * ロックオブジェクト
-     */
-    private final Object _THREAD_LOCK = new Object();
-    
-    
-    
-    /**
      * 同期対象スレッド
      */
-    private Thread _thread = null;
+    private final Thread _thread;
     
 }

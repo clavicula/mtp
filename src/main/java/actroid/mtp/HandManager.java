@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import wiz.project.jan.Hand;
@@ -261,8 +262,8 @@ public final class HandManager extends Observable {
      */
     private LinearLayout.LayoutParams createHandViewParam() {
         final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                                          LinearLayout.LayoutParams.WRAP_CONTENT);
+            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
         param.weight = 1.0f;
         return param;
     }
@@ -274,8 +275,8 @@ public final class HandManager extends Observable {
      */
     private LinearLayout.LayoutParams createFixedMenTsuViewParam() {
         final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                                          LinearLayout.LayoutParams.WRAP_CONTENT);
+            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
         param.weight = 1.0f;
         param.gravity = Gravity.BOTTOM;
         return param;

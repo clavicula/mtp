@@ -38,7 +38,7 @@
     <string name="pai_haku">白</string>
     <string name="pai_hatu">發</string>
     <string name="pai_chun">中</string>
-    <string name="button_check">リーチ！</string>
+    <string name="button_check">待ち判定</string>
     <string name="button_clear">リセット</string>
     <string name="result_hand">手牌</string>
     <string name="result_pattern">聴牌パターン</string>

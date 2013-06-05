@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import wiz.android.util.ButtonManager;
 import wiz.android.util.UncaughtExceptionHandlerFactory;
 import wiz.project.jan.JanPai;
 import wiz.project.jan.MenTsu;
@@ -21,6 +22,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -175,8 +177,8 @@ public final class ResultActivity extends Activity {
      */
     private LinearLayout.LayoutParams createFixedMenTsuViewParam() {
         final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                                          LinearLayout.LayoutParams.WRAP_CONTENT);
+            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
         param.weight = 1.0f;
         param.gravity = Gravity.BOTTOM;
         return param;
@@ -189,8 +191,8 @@ public final class ResultActivity extends Activity {
      */
     private LinearLayout.LayoutParams createHandViewParam() {
         final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                                          LinearLayout.LayoutParams.MATCH_PARENT);
+            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.MATCH_PARENT);
         param.weight = 1.0f;
         return param;
     }

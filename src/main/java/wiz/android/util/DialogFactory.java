@@ -55,15 +55,14 @@ public class DialogFactory {
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setCancelable(true);
         
-        final boolean quietCancel = (onCancel == null);
-        final String cancelButtonName = quietCancel ? "Cancel" : onCancel.getName();
+        final String cancelButtonName = (onCancel == null) ? "Cancel" : onCancel.getName();
         builder.setPositiveButton(cancelButtonName, createCancelButtonListener(onCancel));
         builder.setNeutralButton("OK", onOK);
         
         final AlertDialog dialog = builder.create();
         dialog.setTitle(title);
         dialog.setMessage(message);
-        if (!quietCancel) {
+        if (onCancel != null) {
             dialog.setOnKeyListener(createBackKeyListener(onCancel));
         }
         return dialog;

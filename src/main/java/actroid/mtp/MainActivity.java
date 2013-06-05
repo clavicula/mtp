@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+import wiz.android.util.ButtonManager;
 import wiz.android.util.DialogFactory;
 import wiz.android.util.JoinProgressThread;
 import wiz.android.util.ProgressThread;
@@ -22,7 +23,6 @@ import wiz.android.util.UncaughtExceptionHandlerFactory;
 import wiz.project.jan.Hand;
 import wiz.project.jan.JanPai;
 import wiz.project.jan.TenpaiPattern;
-import wiz.project.jan.TenpaiPatternThread;
 import actroid.mtp.call.CallDialogFactory;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -205,7 +205,7 @@ public final class MainActivity extends Activity implements Observer {
      * @param patternList パターン。
      */
     private void showResultPattern(final List<TenpaiPattern> patternList) {
-        final Intent intent = new Intent(MainActivity.this, ResultActivity.class);
+        final Intent intent = new Intent(this, ResultActivity.class);
         intent.putExtra(MTPConst.KEY_TENPAI_PATTERN, (Serializable)patternList);
         startActivity(intent);
     }

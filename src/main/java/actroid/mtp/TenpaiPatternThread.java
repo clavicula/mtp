@@ -4,12 +4,18 @@
  * @Author
  *   Yuki Kawata
  */
-package wiz.project.jan;
+package actroid.mtp;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import wiz.project.jan.Hand;
+import wiz.project.jan.JanPai;
+import wiz.project.jan.TenpaiPattern;
+import wiz.project.jan.util.HandCheckUtil;
+import wiz.project.jan.util.JanPaiUtil;
 
 
 
@@ -66,8 +72,8 @@ public final class TenpaiPatternThread extends Thread {
     @Override
     public void run() {
         final Map<JanPai, Integer> menZen = _hand.getMenZenMap();
-        JanPaiUtil.removeEmptyJanPai(menZen);
-        _completed = JanPaiUtil.isComplete(menZen);
+        JanPaiUtil.cleanJanPaiMap(menZen);
+        _completed = HandCheckUtil.isComplete(menZen);
         
         for (final JanPai pai : menZen.keySet()) {
             // 中断可能にしておく
@@ -77,7 +83,7 @@ public final class TenpaiPatternThread extends Thread {
             
             final Hand pattern = _hand.clone();
             pattern.removeJanPai(pai);
-            final List<JanPai> completableList = JanPaiUtil.getCompletable(pattern);
+            final List<JanPai> completableList = HandCheckUtil.getCompletableJanPaiList(pattern);
             if (!completableList.isEmpty()) {
                 final Map<JanPai, Integer> expectation = getExpectation(_hand, completableList);
                 _patternList.add(new TenpaiPattern(pai, completableList, expectation));

@@ -1,11 +1,11 @@
 /**
- * CheckButtonManager.java
+ * ButtonManager.java
  * 
  * @Author
  *   Yuki Kawata
  */
 
-package actroid.mtp;
+package wiz.android.util;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +15,7 @@ import android.widget.Button;
 
 
 /**
- * 確認ボタン管理
+ * ボタン管理
  */
 public final class ButtonManager {
     

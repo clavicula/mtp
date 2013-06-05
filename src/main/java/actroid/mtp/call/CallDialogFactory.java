@@ -7,7 +7,7 @@
 
 package actroid.mtp.call;
 
-import actroid.mtp.ButtonManager;
+import wiz.android.util.ButtonManager;
 import actroid.mtp.MTPConst;
 import actroid.mtp.R;
 import android.app.Activity;
