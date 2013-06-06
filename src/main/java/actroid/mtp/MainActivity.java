@@ -10,15 +10,16 @@ package actroid.mtp;
 
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import wiz.android.util.ButtonManager;
-import wiz.android.util.DialogFactory;
-import wiz.android.util.JoinProgressThread;
-import wiz.android.util.ProgressThread;
+import wiz.android.button.ButtonManager;
+import wiz.android.dialog.DialogFactory;
+import wiz.android.dialog.JoinProgressThread;
+import wiz.android.dialog.ProgressThread;
 import wiz.android.util.UncaughtExceptionHandlerFactory;
 import wiz.project.jan.Hand;
 import wiz.project.jan.JanPai;
@@ -85,6 +86,47 @@ public final class MainActivity extends Activity implements Observer {
     
     
     /**
+     * 手牌確認時の処理
+     */
+    void onCheck() {
+        boolean changeView = false;
+        try {
+            synchronized (_PATTERN_THREAD_LOCK) {
+                if (_tenpaiPatternThread == null) {
+                    // 14牌あるのにスレッドが作動していない
+                    throw new IllegalStateException("Pattern thread is null.");
+                }
+                if (!_tenpaiPatternThread.isFinished()) {
+                    joinWithProgressDialog(_tenpaiPatternThread);
+                }
+                
+                final List<TenpaiPattern> patternList = _tenpaiPatternThread.getPatternList();
+                if (patternList.isEmpty()) {
+                    alert("不聴です");
+                    return;
+                }
+                
+                changeView = true;
+                final CheckOKListener onOK = new CheckOKListener(patternList);
+                if (_tenpaiPatternThread.isCompleted()) {
+                    final DialogFactory.CancelListener onCancel = new CheckCancelListener();
+                    confirm("和了済みです。\n判定しますか？", onOK, onCancel);
+                }
+                else {
+                    onOK.showResultPattern();
+                }
+            }
+        }
+        finally {
+            if (!changeView) {
+                ButtonManager.getInstance().unlock(R.id.button_check);
+            }
+        }
+    }
+    
+    
+    
+    /**
      * 画面生成時の処理
      */
     @Override
@@ -134,6 +176,18 @@ public final class MainActivity extends Activity implements Observer {
         final DialogFactory factory = new DialogFactory();
         final AlertDialog dialog =
             factory.createSimpleAlert(this, MTPConst.APP_NAME, message);
+        dialog.show();
+    }
+    
+    /**
+     * 確認ダイアログ
+     * 
+     * @param message 確認メッセージ。
+     * @param onOK OKボタン押下時の処理。
+     */
+    private void confirm(final String message, final DialogInterface.OnClickListener onOK, final DialogFactory.CancelListener onCancel) {
+        final DialogFactory factory = new DialogFactory();
+        final AlertDialog dialog = factory.createConfirmAlert(this, MTPConst.APP_NAME, message, onCancel, onOK);
         dialog.show();
     }
     
@@ -197,17 +251,6 @@ public final class MainActivity extends Activity implements Observer {
     private void joinWithProgressDialog(final Thread thread) {
         final ProgressThread progress = new JoinProgressThread(thread);
         progress.show(this);
-    }
-    
-    /**
-     * 待ち牌判定結果を表示
-     * 
-     * @param patternList パターン。
-     */
-    private void showResultPattern(final List<TenpaiPattern> patternList) {
-        final Intent intent = new Intent(this, ResultActivity.class);
-        intent.putExtra(MTPConst.KEY_TENPAI_PATTERN, (Serializable)patternList);
-        startActivity(intent);
     }
     
     /**
@@ -282,84 +325,71 @@ public final class MainActivity extends Activity implements Observer {
         public void onClick(final View view) {
             // ボタン連打対策
             ButtonManager.getInstance().lock(R.id.button_check);
-            
-            boolean changeView = false;
-            try {
-                synchronized (_PATTERN_THREAD_LOCK) {
-                    if (_tenpaiPatternThread == null) {
-                        // 14牌あるのにスレッドが作動していない
-                        throw new IllegalStateException("Pattern thread is null.");
-                    }
-                    if (!_tenpaiPatternThread.isFinished()) {
-                        joinWithProgressDialog(_tenpaiPatternThread);
-                    }
-                    
-                    final List<TenpaiPattern> patternList = _tenpaiPatternThread.getPatternList();
-                    if (patternList.isEmpty()) {
-                        alert("不聴です");
-                        return;
-                    }
-                    
-                    changeView = true;
-                    if (_tenpaiPatternThread.isCompleted()) {
-                        final DialogInterface.OnClickListener onOK = new DialogInterface.OnClickListener() {
-                            public void onClick(final DialogInterface dialog, final int selected) {
-                                showResultPattern(patternList);
-                            }
-                        };
-                        final DialogFactory.CancelListener onCancel = new CancelListener();
-                        confirm("和了済みです。\n判定しますか？", onOK, onCancel);
-                    }
-                    else {
-                        showResultPattern(patternList);
-                    }
-                }
-            }
-            finally {
-                if (!changeView) {
-                    ButtonManager.getInstance().unlock(R.id.button_check);
-                }
-            }
+            onCheck();
         }
-        
-        /**
-         * 確認ダイアログ
-         * 
-         * @param message 確認メッセージ。
-         * @param onOK OKボタン押下時の処理。
-         */
-        private void confirm(final String message, final DialogInterface.OnClickListener onOK, final DialogFactory.CancelListener onCancel) {
-            final DialogFactory factory = new DialogFactory();
-            final AlertDialog dialog = factory.createConfirmAlert(MainActivity.this, MTPConst.APP_NAME, message, onCancel, onOK);
-            dialog.show();
-        }
-        
-        /**
-         * キャンセル処理リスナー
-         */
-        private final class CancelListener implements DialogFactory.CancelListener {
-            
-            /**
-             * コンストラクタ
-             */
-            public CancelListener() {
-            }
-            
-            /**
-             * リスナー名を取得
-             */
-            public String getName() {
-                return "キャンセル";
-            }
-            
-            /**
-             * キャンセル時の処理
-             */
-            public void onCancel(final DialogInterface dialog) {
-                ButtonManager.getInstance().unlock(R.id.button_check);
-            }
-        };
     }
+    
+    /**
+     * 確認キャンセル処理リスナー
+     */
+    private static final class CheckCancelListener implements DialogFactory.CancelListener {
+        
+        /**
+         * コンストラクタ
+         */
+        public CheckCancelListener() {
+        }
+        
+        /**
+         * リスナー名を取得
+         */
+        public String getName() {
+            return "キャンセル";
+        }
+        
+        /**
+         * キャンセル時の処理
+         */
+        public void onCancel(final DialogInterface dialog) {
+            ButtonManager.getInstance().unlock(R.id.button_check);
+        }
+    };
+    
+    /**
+     * 確認OK処理リスナー
+     */
+    private final class CheckOKListener implements DialogInterface.OnClickListener {
+        
+        /**
+         * コンストラクタ
+         * 
+         * @param patternList 聴牌パターンリスト。
+         */
+        public CheckOKListener(final List<TenpaiPattern> patternList) {
+            _patternList = new ArrayList<TenpaiPattern>(patternList);
+        }
+        
+        /**
+         * クリック時の処理
+         */
+        public void onClick(final DialogInterface dialog, final int selected) {
+            showResultPattern();
+        }
+        
+        /**
+         * 待ち牌判定結果を表示
+         */
+        public void showResultPattern() {
+            final Intent intent = new Intent(MainActivity.this, ResultActivity.class);
+            intent.putExtra(MTPConst.KEY_TENPAI_PATTERN, (Serializable)_patternList);
+            startActivity(intent);
+        }
+        
+        /**
+         * 聴牌パターンリスト
+         */
+        private final List<TenpaiPattern> _patternList;
+    };
     
     /**
      * リセットボタンリスナー

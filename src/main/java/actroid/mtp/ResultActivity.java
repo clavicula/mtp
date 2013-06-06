@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import wiz.android.util.ButtonManager;
+import wiz.android.button.ButtonManager;
 import wiz.android.util.UncaughtExceptionHandlerFactory;
 import wiz.project.jan.JanPai;
 import wiz.project.jan.MenTsu;

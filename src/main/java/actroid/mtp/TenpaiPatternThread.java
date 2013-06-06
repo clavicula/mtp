@@ -29,6 +29,8 @@ public final class TenpaiPatternThread extends Thread {
     
     /**
      * コンストラクタ
+     * 
+     * @param hand 手牌。
      */
     public TenpaiPatternThread(final Hand hand) {
         if (hand == null) {

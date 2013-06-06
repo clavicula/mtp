@@ -256,19 +256,6 @@ public final class HandManager extends Observable {
     
     
     /**
-     * 手牌ビューのパラメータを生成
-     * 
-     * @return 手牌ビューのパラメータ。
-     */
-    private LinearLayout.LayoutParams createHandViewParam() {
-        final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-                                          LayoutParams.WRAP_CONTENT);
-        param.weight = 1.0f;
-        return param;
-    }
-    
-    /**
      * 確定面子ビューのパラメータを生成
      * 
      * @return 確定面子ビューのパラメータ。
@@ -279,6 +266,19 @@ public final class HandManager extends Observable {
                                           LayoutParams.WRAP_CONTENT);
         param.weight = 1.0f;
         param.gravity = Gravity.BOTTOM;
+        return param;
+    }
+    
+    /**
+     * 手牌ビューのパラメータを生成
+     * 
+     * @return 手牌ビューのパラメータ。
+     */
+    private LinearLayout.LayoutParams createHandViewParam() {
+        final LinearLayout.LayoutParams param =
+            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
+        param.weight = 1.0f;
         return param;
     }
     
