@@ -114,8 +114,11 @@ public final class ResultActivity extends Activity {
         view.setOrientation(LinearLayout.HORIZONTAL);
         view.setGravity(Gravity.BOTTOM);
         for (final JanPai pai : completableList) {
-            view.addView(createJanPaiImageView(pai));
-            view.addView(createTextView(expectation.get(pai) + " "));
+            final int count = expectation.get(pai);
+            if (count != 0) {
+                view.addView(createJanPaiImageView(pai));
+                view.addView(createTextView(count + " "));
+            }
         }
         final String text = poor ? "待ち [フリテン]" : "待ち";
         view.addView(createTextView(text));

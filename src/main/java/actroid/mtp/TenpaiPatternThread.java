@@ -88,7 +88,11 @@ public final class TenpaiPatternThread extends Thread {
             final List<JanPai> completableList = HandCheckUtil.getCompletableJanPaiList(pattern);
             if (!completableList.isEmpty()) {
                 final Map<JanPai, Integer> expectation = getExpectation(_hand, completableList);
-                _patternList.add(new TenpaiPattern(pai, completableList, expectation));
+                final int totalCount = JanPaiUtil.getJanPaiTotalCount(expectation);
+                if (totalCount != 0) {
+                    // 待ちが枯れていなければ追加
+                    _patternList.add(new TenpaiPattern(pai, completableList, expectation));
+                }
             }
         }
         
@@ -118,8 +122,8 @@ public final class TenpaiPatternThread extends Thread {
         final Map<JanPai, Integer> source = hand.getAllJanPaiMap();
         final Map<JanPai, Integer> expectation = new TreeMap<JanPai, Integer>();
         for (final JanPai pai : completableList) {
-            final int count = source.get(pai);
-            expectation.put(pai, 4 - count);
+            final int count = 4 - source.get(pai);
+            expectation.put(pai, count);
         }
         return expectation;
     }
