@@ -8,7 +8,6 @@
 package actroid.mtp;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +25,8 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.ImageView.ScaleType;
 
 
 
@@ -60,9 +59,7 @@ public final class ResultActivity extends Activity {
         initializeFixedMenTsuView();
         
         final List<TenpaiPattern> patternList = getCreateParam(MTPConst.KEY_TENPAI_PATTERN);
-        synchronized (_PATTERN_VIEW_LOCK) {
-            initializeTenpaiPatternView(patternList);
-        }
+        initializeTenpaiPatternView(patternList);
     }
     
     /**
@@ -81,9 +78,10 @@ public final class ResultActivity extends Activity {
     /**
      * 聴牌パターンを追加
      * 
+     * @param patternView 聴牌パターンビュー。
      * @param pattern 聴牌パターン。
      */
-    private void addTenpaiPattern(final TenpaiPattern pattern) {
+    private void addTenpaiPattern(final LinearLayout patternView, final TenpaiPattern pattern) {
         final JanPai discard = pattern.getDiscard();
         final List<JanPai> completableList = pattern.getCompletableList();
         final Map<JanPai, Integer> expectation = pattern.getExpectation();
@@ -92,12 +90,15 @@ public final class ResultActivity extends Activity {
         final View expectationView = createExpectationView(expectation);
         
         // 上下に余白を設ける
-        discardView.setPadding(0, 20, 0, 0);
-        expectationView.setPadding(0, 0, 0, 20);
+        discardView.setPadding(0, 10, 0, 0);
+        expectationView.setPadding(0, 0, 0, 10);
         
-        _patternView.addView(discardView);
-        _patternView.addView(completableView);
-        _patternView.addView(expectationView);
+        // スクロール可能ならば常にスクロールバーを表示
+        completableView.setScrollbarFadingEnabled(false);
+        
+        patternView.addView(discardView);
+        patternView.addView(completableView);
+        patternView.addView(expectationView);
     }
     
     /**
@@ -155,60 +156,39 @@ public final class ResultActivity extends Activity {
     }
     
     /**
-     * 手牌ビューを生成
-     * 
-     * @param index 手牌インデックス。
-     * @param image 手牌画像。
-     * @return 手牌画像ビュー。
-     */
-    private ImageView createHandView(final int index, final Bitmap image) {
-        final ImageView view = new ImageView(this);
-        view.setId(MTPConst.HAND_VIEW_RESULT_BASE_ID + index);
-        view.setLayoutParams(createHandViewParam());
-        view.setScaleType(ScaleType.FIT_CENTER);
-        view.setImageBitmap(image);
-        return view;
-    }
-    
-    /**
      * 確定面子ビューのパラメータを生成
      * 
+     * @param baseID 起点ID。
      * @return 確定面子ビューのパラメータ。
      */
-    private LinearLayout.LayoutParams createFixedMenTsuViewParam() {
-        final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+    private RelativeLayout.LayoutParams createFixedMenTsuViewParam(final int baseID) {
+        final RelativeLayout.LayoutParams param =
+            new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
                                           LayoutParams.WRAP_CONTENT);
-        param.weight = 1.0f;
-        param.gravity = Gravity.BOTTOM;
+        param.addRule(RelativeLayout.LEFT_OF, baseID);
+        param.addRule(RelativeLayout.ALIGN_BOTTOM, baseID);
         return param;
     }
     
     /**
      * 手牌ビューのパラメータを生成
      * 
+     * @param handID 手牌ID。
      * @return 手牌ビューのパラメータ。
      */
-    private LinearLayout.LayoutParams createHandViewParam() {
-        final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-                                          LayoutParams.MATCH_PARENT);
-        param.weight = 1.0f;
+    private RelativeLayout.LayoutParams createHandViewParam(final int handID) {
+        final int index = handID - MTPConst.HAND_VIEW_RESULT_BASE_ID;
+        if (index < 0) {
+            throw new IllegalArgumentException("Invalid hand ID - " + handID);
+        }
+        
+        final RelativeLayout.LayoutParams param =
+            new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
+        if (index != 0) {
+            param.addRule(RelativeLayout.RIGHT_OF, handID - 1);
+        }
         return param;
-    }
-    
-    /**
-     * 不可視牌ビューを生成
-     * 
-     * @return 不可視牌ビュー。
-     */
-    private ImageView createInvisiblePaiView() {
-        final ImageView view = new ImageView(this);
-        view.setLayoutParams(createHandViewParam());
-        view.setScaleType(ScaleType.FIT_CENTER);
-        view.setImageBitmap(ImageResourceManager.getInstance().getBlankImage());
-        view.setVisibility(View.INVISIBLE);
-        return view;
     }
     
     /**
@@ -221,6 +201,21 @@ public final class ResultActivity extends Activity {
         final ImageView view = new ImageView(this);
         view.setImageBitmap(ImageResourceManager.getInstance().getImage(pai));
         return view;
+    }
+    
+    /**
+     * 面子ビューの基点を生成
+     * 
+     * @return 面子ビューの基点。
+     */
+    private LinearLayout createMenTsuViewBase() {
+        final JanPaiViewFactory factory = createJanPaiViewFactory();
+        final RelativeLayout.LayoutParams layoutParam =
+            new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
+        layoutParam.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+        final int viewID = MTPConst.FIXED_VIEW_RESULT_BASE_ID - 1;
+        return factory.createMenTsuMinHeightDummyView(viewID, layoutParam);
     }
     
     /**
@@ -263,32 +258,27 @@ public final class ResultActivity extends Activity {
      * 確定面子ビューを初期化
      */
     private void initializeFixedMenTsuView() {
-        int count = 0;
         final JanPaiViewFactory factory = createJanPaiViewFactory();
-        final LinearLayout.LayoutParams layoutParam = createFixedMenTsuViewParam();
-        final List<List<ImageView>> viewList = new ArrayList<List<ImageView>>();
+        final List<LinearLayout> viewList = new ArrayList<LinearLayout>();
+        
+        // 常にカン牌と同じ高さのビュー領域を確保するためのダミー
+        final LinearLayout baseView = createMenTsuViewBase();
+        viewList.add(baseView);
+        
+        int count = 0;
         for (final MenTsu menTsu : HandManager.getInstance().getFixedMenTsuList()) {
             final int menTsuID = MTPConst.FIXED_VIEW_RESULT_BASE_ID + count;
-            final List<ImageView> view = factory.createMenTsuView(menTsu, menTsuID, layoutParam);
-            view.get(0).setPadding(10, 0, 0, 0);
+            final int baseID = (count == 0) ? baseView.getId() : (menTsuID - 1);
+            final RelativeLayout.LayoutParams layoutParam = createFixedMenTsuViewParam(baseID);
+            final LinearLayout view = factory.createMenTsuView(menTsu, menTsuID, layoutParam);
+            view.setPadding(10, 0, 0, 0);
             viewList.add(view);
             count++;
         }
         
-        for (; count < 4; count++) {
-            // 常に四副露時のサイズで画像を表示するため、不可視のビューを追加
-            final List<ImageView> view = factory.createInvisibleMenTsuView(layoutParam);
-            view.get(0).setPadding(10, 0, 0, 0);
-            viewList.add(view);
-        }
-        
-        // 最初に副露した面子が右に来るように逆順ソート
-        Collections.reverse(viewList);
-        final LinearLayout fixedMenTsuView = (LinearLayout)findViewById(R.id.result_fixed_layout);
-        for (final List<ImageView> view : viewList) {
-            for (final ImageView pai : view) {
-                fixedMenTsuView.addView(pai);
-            }
+        final RelativeLayout fixedMenTsuView = (RelativeLayout)findViewById(R.id.result_fixed_layout);
+        for (final LinearLayout view : viewList) {
+            fixedMenTsuView.addView(view);
         }
     }
     
@@ -296,18 +286,21 @@ public final class ResultActivity extends Activity {
      * 手牌ビューを初期化
      */
     private void initializeHandView() {
-        final LinearLayout handView = (LinearLayout)findViewById(R.id.result_hand_layout);
+        final JanPaiViewFactory factory = createJanPaiViewFactory();
+        final List<ImageView> viewList = new ArrayList<ImageView>();
         int count = 0;
         for (final JanPai pai : HandManager.getInstance().getMenZenList()) {
+            final int handID = MTPConst.HAND_VIEW_RESULT_BASE_ID + count;
+            final RelativeLayout.LayoutParams layoutParam = createHandViewParam(handID);
             final Bitmap image = ImageResourceManager.getInstance().getImage(pai);
-            final ImageView view = createHandView(count, image);
-            handView.addView(view);
+            final ImageView view = factory.createJanPaiView(handID, image, layoutParam);
+            viewList.add(view);
             count++;
         }
         
-        for (; count < 14; count++) {
-            // 常に14牌時のサイズで画像を表示するため、不可視のビューを追加
-            handView.addView(createInvisiblePaiView());
+        final RelativeLayout handView = (RelativeLayout)findViewById(R.id.result_hand_layout);
+        for (final ImageView view : viewList) {
+            handView.addView(view);
         }
     }
     
@@ -317,25 +310,10 @@ public final class ResultActivity extends Activity {
      * @param patternList 聴牌パターン。
      */
     private void initializeTenpaiPatternView(final List<TenpaiPattern> patternList) {
-        _patternView = (LinearLayout)findViewById(R.id.result_pattern_layout);
-        
+        final LinearLayout patternView = (LinearLayout)findViewById(R.id.result_pattern_layout);
         for (final TenpaiPattern pattern : patternList) {
-            addTenpaiPattern(pattern);
+            addTenpaiPattern(patternView, pattern);
         }
     }
-    
-    
-    
-    /**
-     * ロックオブジェクト
-     */
-    private final Object _PATTERN_VIEW_LOCK = new Object();
-    
-    
-    
-    /**
-     * 待ち牌パターンビュー
-     */
-    private LinearLayout _patternView = null;
     
 }

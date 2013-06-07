@@ -159,6 +159,17 @@ public final class ImageResourceManager {
     }
     
     /**
+     * カン表示用積み牌の高さを持つダミー画像を取得
+     * 
+     * @return ダミー画像。
+     */
+    public Bitmap getStackImageHeightDummy() {
+        synchronized (_STACK_HEIGHT_DUMMY_LOCK) {
+            return _stackHeightDummy;
+        }
+    }
+    
+    /**
      * 初期化処理
      * 
      * @param activity メイン画面。
@@ -174,7 +185,7 @@ public final class ImageResourceManager {
         initializeStackResourceID();
         
         final Resources core = activity.getResources();
-        final double targetWidth = getDisplayWidth(activity) / 15.0;
+        final double targetWidth = getDisplayShortEdge(activity) / 18.0;
         final double sourceWidth = getJanPaiWidth(core);
         final double scale = targetWidth / sourceWidth;
         
@@ -210,22 +221,25 @@ public final class ImageResourceManager {
         }
         synchronized (_BLANK_STACK_RESOURCE_LOCK) {
             _blankStackResource = readImage(core, R.drawable.ura_kan, scale, true);
+            final int height = _blankStackResource.getHeight();
+            _stackHeightDummy =
+                Bitmap.createScaledBitmap(_blankStackResource, 1, height, true);
         }
     }
     
     
     
     /**
-     * ディスプレイ幅を取得
+     * ディスプレイ短辺を取得
      * 
      * @param activity 画面。
-     * @return ディスプレイ幅。
+     * @return ディスプレイ短辺。
      */
-    private double getDisplayWidth(final Activity activity) {
+    private double getDisplayShortEdge(final Activity activity) {
         final WindowManager window =
             (WindowManager)activity.getSystemService(Context.WINDOW_SERVICE);
         final Display display = window.getDefaultDisplay();
-        return display.getWidth();
+        return Math.min(display.getWidth(), display.getHeight());
     }
     
     /**
@@ -457,6 +471,11 @@ public final class ImageResourceManager {
      */
     private final Object _BLANK_STACK_RESOURCE_LOCK = new Object();
     
+    /**
+     * ロックオブジェクト (ダミー - カン表示用積み牌の高さ)
+     */
+    private final Object _STACK_HEIGHT_DUMMY_LOCK = new Object();
+    
     
     
     /**
@@ -518,5 +537,10 @@ public final class ImageResourceManager {
      * 牌裏 (カン表示用積み牌)
      */
     private Bitmap _blankStackResource = null;
+    
+    /**
+     * ダミー (カン表示用積み牌の高さ)
+     */
+    private Bitmap _stackHeightDummy = null;
     
 }

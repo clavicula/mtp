@@ -222,7 +222,8 @@ public final class MainActivity extends Activity implements Observer {
      * 手牌ビューを初期化
      */
     private void initializeHandView() {
-        HandManager.getInstance().initialize(this, this);
+        HandManager.getInstance().initialize(this);
+        HandManager.getInstance().addObserver(this);
         HandManager.getInstance().updateView();
     }
     

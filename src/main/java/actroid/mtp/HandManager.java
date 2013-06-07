@@ -12,16 +12,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
-import java.util.Observer;
 import java.util.TreeMap;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import wiz.project.jan.Hand;
 import wiz.project.jan.JanPai;
 import wiz.project.jan.MenTsu;
@@ -138,6 +137,17 @@ public final class HandManager extends Observable {
     }
     
     /**
+     * 面前手牌の上限枚数を取得
+     * 
+     * @return 面前手牌の上限枚数。
+     */
+    public int getLimitSize() {
+        synchronized (_HAND_LOCK) {
+            return _hand.getLimitSize();
+        }
+    }
+    
+    /**
      * 面前手牌リストを取得
      * 
      * @return 面前手牌リスト。
@@ -160,23 +170,11 @@ public final class HandManager extends Observable {
     }
     
     /**
-     * 空き枚数を取得
-     * 
-     * @return 空き枚数。
-     */
-    public int getUsableSize() {
-        synchronized (_HAND_LOCK) {
-            return _hand.getUsableSize();
-        }
-    }
-    
-    /**
      * 初期化処理
      * 
      * @param activity 親画面。
-     * @param observer 監視者。手牌の飽和を通知する。
      */
-    public void initialize(final Activity activity, final Observer observer) {
+    public void initialize(final Activity activity) {
         if (activity == null) {
             throw new NullPointerException("Parent activity is null.");
         }
@@ -184,7 +182,6 @@ public final class HandManager extends Observable {
         synchronized (_PARENT_LOCK) {
             _parent = activity;
         }
-        addObserver(observer);
     }
     
     /**
@@ -240,10 +237,12 @@ public final class HandManager extends Observable {
     public void updateView() {
         synchronized (_HAND_LOCK) {
             synchronized (_PARENT_LOCK) {
-                final LinearLayout handView = getHandView();
+                final RelativeLayout handView =
+                    (RelativeLayout)_parent.findViewById(R.id.main_hand_layout);
                 updateHandView(handView);
                 
-                final LinearLayout fixedMenTsuView = getFixedMenTsuView();
+                final RelativeLayout fixedMenTsuView =
+                    (RelativeLayout)_parent.findViewById(R.id.main_fixed_layout);
                 updateFixedMenTsuView(fixedMenTsuView);
             }
             
@@ -258,55 +257,61 @@ public final class HandManager extends Observable {
     /**
      * 確定面子ビューのパラメータを生成
      * 
+     * @param baseID 起点ID。
      * @return 確定面子ビューのパラメータ。
      */
-    private LinearLayout.LayoutParams createFixedMenTsuViewParam() {
-        final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+    private RelativeLayout.LayoutParams createFixedMenTsuViewParam(final int baseID) {
+        final RelativeLayout.LayoutParams param =
+            new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
                                           LayoutParams.WRAP_CONTENT);
-        param.weight = 1.0f;
-        param.gravity = Gravity.BOTTOM;
+        param.addRule(RelativeLayout.LEFT_OF, baseID);
+        param.addRule(RelativeLayout.ALIGN_BOTTOM, baseID);
         return param;
     }
     
     /**
      * 手牌ビューのパラメータを生成
      * 
+     * @param handID 手牌ID。
      * @return 手牌ビューのパラメータ。
      */
-    private LinearLayout.LayoutParams createHandViewParam() {
-        final LinearLayout.LayoutParams param =
-            new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+    private RelativeLayout.LayoutParams createHandViewParam(final int handID) {
+        final int index = handID - MTPConst.HAND_VIEW_MAIN_BASE_ID;
+        if (index < 0) {
+            throw new IllegalArgumentException("Invalid hand ID - " + handID);
+        }
+        
+        final RelativeLayout.LayoutParams param =
+            new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
                                           LayoutParams.WRAP_CONTENT);
-        param.weight = 1.0f;
+        if (index != 0) {
+            param.addRule(RelativeLayout.RIGHT_OF, handID - 1);
+        }
         return param;
     }
     
     /**
-     * ビュー生成オブジェクトを生成
+     * 雀牌ビュー生成オブジェクトを生成
      * 
      * @return ビュー生成オブジェクト。
      */
-    private JanPaiViewFactory createViewFactory() {
+    private JanPaiViewFactory createJanPaiViewFactory() {
         return new JanPaiViewFactory(_parent);
     }
     
     /**
-     * 確定面子ビューを取得
+     * 面子ビューの基点を生成
      * 
-     * @return 確定面子ビュー。
+     * @return 面子ビューの基点。
      */
-    private LinearLayout getFixedMenTsuView() {
-        return (LinearLayout)_parent.findViewById(R.id.main_fixed_layout);
-    }
-    
-    /**
-     * 手牌ビューを取得
-     * 
-     * @return 手牌ビュー。
-     */
-    private LinearLayout getHandView() {
-        return (LinearLayout)_parent.findViewById(R.id.main_hand_layout);
+    private LinearLayout createMenTsuViewBase() {
+        final JanPaiViewFactory factory = createJanPaiViewFactory();
+        final RelativeLayout.LayoutParams layoutParam =
+            new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                          LayoutParams.WRAP_CONTENT);
+        layoutParam.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+        final int viewID = MTPConst.FIXED_VIEW_MAIN_BASE_ID - 1;
+        return factory.createMenTsuMinHeightDummyView(viewID, layoutParam);
     }
     
     /**
@@ -314,39 +319,31 @@ public final class HandManager extends Observable {
      * 
      * @param fixedMenTsuView 確定面子ビュー。
      */
-    private void updateFixedMenTsuView(final LinearLayout fixedMenTsuView) {
+    private void updateFixedMenTsuView(final RelativeLayout fixedMenTsuView) {
         fixedMenTsuView.removeAllViews();
         
+        final JanPaiViewFactory factory = createJanPaiViewFactory();
+        final List<LinearLayout> viewList = new ArrayList<LinearLayout>();
+        
+        // 常にカン牌と同じ高さのビュー領域を確保するためのダミー
+        final LinearLayout baseView = createMenTsuViewBase();
+        viewList.add(baseView);
+        
         int count = 0;
-        final JanPaiViewFactory factory = createViewFactory();
-        final LinearLayout.LayoutParams layoutParam = createFixedMenTsuViewParam();
-        final List<List<ImageView>> viewList = new ArrayList<List<ImageView>>();
         for (final MenTsu menTsu : _hand.getFixedMenTsuList()) {
             final int menTsuID = MTPConst.FIXED_VIEW_MAIN_BASE_ID + count;
-            final List<ImageView> view = factory.createMenTsuView(menTsu, menTsuID, layoutParam);
-            view.get(0).setPadding(10, 0, 0, 0);
-            
-            for (final ImageView pai : view) {
-                pai.setClickable(true);
-                pai.setOnClickListener(new FixedMenTsuButtonListener());
-            }
+            final int baseID = (count == 0) ? baseView.getId() : (menTsuID - 1);
+            final RelativeLayout.LayoutParams layoutParam = createFixedMenTsuViewParam(baseID);
+            final LinearLayout view = factory.createMenTsuView(menTsu, menTsuID, layoutParam);
+            view.setPadding(10, 0, 0, 0);
+            view.setClickable(true);
+            view.setOnClickListener(new FixedMenTsuButtonListener());
             viewList.add(view);
             count++;
         }
         
-        for (; count < 4; count++) {
-            // 常に四副露時のサイズで画像を表示するため、不可視のビューを追加
-            final List<ImageView> view = factory.createInvisibleMenTsuView(layoutParam);
-            view.get(0).setPadding(10, 0, 0, 0);
-            viewList.add(view);
-        }
-        
-        // 最初に副露した面子が右に来るように逆順ソート
-        Collections.reverse(viewList);
-        for (final List<ImageView> view : viewList) {
-            for (final ImageView pai : view) {
-                fixedMenTsuView.addView(pai);
-            }
+        for (final LinearLayout view : viewList) {
+            fixedMenTsuView.addView(view);
         }
     }
     
@@ -355,17 +352,19 @@ public final class HandManager extends Observable {
      * 
      * @param handView 手牌ビュー。
      */
-    private void updateHandView(final LinearLayout handView) {
+    private void updateHandView(final RelativeLayout handView) {
         handView.removeAllViews();
         
-        final JanPaiViewFactory factory = createViewFactory();
-        final LinearLayout.LayoutParams layoutParam = createHandViewParam();
+        final JanPaiViewFactory factory = createJanPaiViewFactory();
         final List<ImageView> viewList = new ArrayList<ImageView>();
         int count = 0;
         for (final JanPai pai : _hand.getMenZenList()) {
             final int handID = MTPConst.HAND_VIEW_MAIN_BASE_ID + count;
+            final RelativeLayout.LayoutParams layoutParam = createHandViewParam(handID);
             final Bitmap image = ImageResourceManager.getInstance().getImage(pai);
             final ImageView view = factory.createJanPaiView(handID, image, layoutParam);
+            view.setClickable(true);
+            view.setOnClickListener(new HandButtonListener());
             viewList.add(view);
             _handViewIDMap.put(view.getId(), pai);
             count++;
@@ -374,18 +373,9 @@ public final class HandManager extends Observable {
         final int limitSize = _hand.getLimitSize();
         for (; count < limitSize; count++) {
             final int handID = MTPConst.HAND_VIEW_MAIN_BASE_ID + count;
+            final RelativeLayout.LayoutParams layoutParam = createHandViewParam(handID);
             final ImageView view = factory.createBlankJanPaiView(handID, layoutParam);
             viewList.add(view);
-        }
-        
-        for (final ImageView view : viewList) {
-            view.setClickable(true);
-            view.setOnClickListener(new HandButtonListener());
-        }
-        
-        for (; count < 14; count++) {
-            // 常に14牌時のサイズで画像を表示するため、不可視のビューを追加
-            viewList.add(factory.createInvisibleJanPaiView(layoutParam));
         }
         
         for (final ImageView view : viewList) {

@@ -83,8 +83,8 @@ public final class TenpaiPatternThread extends Thread {
                 return;
             }
             
-            final Hand pattern = _hand.clone();
-            pattern.removeJanPai(pai);
+            final Map<JanPai, Integer> pattern = deepCopyMap(menZen);
+            JanPaiUtil.removeJanPai(pattern, pai, 1);
             final List<JanPai> completableList = HandCheckUtil.getCompletableJanPaiList(pattern);
             if (!completableList.isEmpty()) {
                 final Map<JanPai, Integer> expectation = getExpectation(_hand, completableList);
@@ -96,6 +96,16 @@ public final class TenpaiPatternThread extends Thread {
     }
     
     
+    
+    /**
+     * マップをディープコピー
+     * 
+     * @param source 複製元。
+     * @return 複製結果。
+     */
+    private <S, T> Map<S, T> deepCopyMap(final Map<S, T> source) {
+        return new TreeMap<S, T>(source);
+    }
     
     /**
      * 期待枚数を取得

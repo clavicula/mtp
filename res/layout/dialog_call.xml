@@ -1,37 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical" >
+    android:layout_height="wrap_content" >
+    
+	<LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical" >
+	
+	    <Button
+	        android:id="@+id/button_call_chi"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/button_call_chi" />
+	
+	    <Button
+	        android:id="@+id/button_call_pon"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/button_call_pon" />
+	
+	    <Button
+	        android:id="@+id/button_call_kan_light"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/button_call_kan_light" />
+	
+	    <Button
+	        android:id="@+id/button_call_kan_dark"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/button_call_kan_dark" />
+	
+	    <Button
+	        android:id="@+id/button_call_cancel"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/button_call_cancel" />
 
-    <Button
-        android:id="@+id/button_call_chi"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/button_call_chi" />
-
-    <Button
-        android:id="@+id/button_call_pon"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/button_call_pon" />
-
-    <Button
-        android:id="@+id/button_call_kan_light"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/button_call_kan_light" />
-
-    <Button
-        android:id="@+id/button_call_kan_dark"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/button_call_kan_dark" />
-
-    <Button
-        android:id="@+id/button_call_cancel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/button_call_cancel" />
-
-</LinearLayout>
+    </LinearLayout>
+    
+</ScrollView>

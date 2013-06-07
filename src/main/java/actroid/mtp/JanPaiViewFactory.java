@@ -14,10 +14,12 @@ import wiz.project.jan.JanPai;
 import wiz.project.jan.MenTsu;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ImageView.ScaleType;
+import android.widget.RelativeLayout;
 
 
 
@@ -60,7 +62,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。
      * @return 面子構成牌ビュー。
      */
-    public ImageView createBlankJanPaiView(final int viewID, final LinearLayout.LayoutParams layoutParam) {
+    public ImageView createBlankJanPaiView(final int viewID, final RelativeLayout.LayoutParams layoutParam) {
         if (layoutParam == null) {
             throw new NullPointerException("Layout parameter is null.");
         }
@@ -88,7 +90,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。
      * @return 不可視牌ビュー。
      */
-    public ImageView createInvisibleJanPaiView(final LinearLayout.LayoutParams layoutParam) {
+    public ImageView createInvisibleJanPaiView(final RelativeLayout.LayoutParams layoutParam) {
         if (layoutParam == null) {
             throw new NullPointerException("Layout parameter is null.");
         }
@@ -103,7 +105,7 @@ public class JanPaiViewFactory {
      * 
      * @return 不可視面子ビュー。
      */
-    public List<ImageView> createInvisibleMenTsuView() {
+    public LinearLayout createInvisibleMenTsuView() {
         synchronized (_PARENT_LOCK) {
             return createInvisibleMenTsuViewCore(null);
         }
@@ -115,7 +117,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。
      * @return 不可視面子ビュー。
      */
-    public List<ImageView> createInvisibleMenTsuView(final LinearLayout.LayoutParams layoutParam) {
+    public LinearLayout createInvisibleMenTsuView(final RelativeLayout.LayoutParams layoutParam) {
         if (layoutParam == null) {
             throw new NullPointerException("Layout parameter is null.");
         }
@@ -150,7 +152,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。
      * @return 面子構成牌ビュー。
      */
-    public ImageView createJanPaiView(final int viewID, final Bitmap image, final LinearLayout.LayoutParams layoutParam) {
+    public ImageView createJanPaiView(final int viewID, final Bitmap image, final RelativeLayout.LayoutParams layoutParam) {
         if (image == null) {
             throw new NullPointerException("Source image is null.");
         }
@@ -164,13 +166,38 @@ public class JanPaiViewFactory {
     }
     
     /**
+     * 面子ビューの最低限の高さを持つダミービューを取得
+     * 
+     * @param viewID ダミービューのID。
+     * @param layoutParam レイアウトパラメータ。
+     * @return 面子ビューの最低限の高さを持つダミービュー。
+     */
+    public LinearLayout createMenTsuMinHeightDummyView(final int viewID, final RelativeLayout.LayoutParams layoutParam) {
+        if (layoutParam == null) {
+            throw new NullPointerException("Layout parameter is null.");
+        }
+        
+        final Bitmap image = ImageResourceManager.getInstance().getStackImageHeightDummy();
+        synchronized (_PARENT_LOCK) {
+            final ImageView view = createImageView(image);
+            view.setVisibility(View.INVISIBLE);
+            
+            final LinearLayout layout = new LinearLayout(_parent);
+            layout.setId(viewID);
+            layout.setLayoutParams(layoutParam);
+            layout.addView(view);
+            return layout;
+        }
+    }
+    
+    /**
      * 面子ビューを生成
      * 
      * @param menTsu 面子。
      * @param menTsuID 面子ID。
      * @return 面子ビュー。
      */
-    public List<ImageView> createMenTsuView(final MenTsu menTsu, final int menTsuID) {
+    public LinearLayout createMenTsuView(final MenTsu menTsu, final int menTsuID) {
         if (menTsu == null) {
             throw new NullPointerException("Source men tsu is null.");
         }
@@ -188,7 +215,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。
      * @return 面子ビュー。
      */
-    public List<ImageView> createMenTsuView(final MenTsu menTsu, final int menTsuID, final LinearLayout.LayoutParams layoutParam) {
+    public LinearLayout createMenTsuView(final MenTsu menTsu, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
         if (menTsu == null) {
             throw new NullPointerException("Source men tsu is null.");
         }
@@ -205,9 +232,14 @@ public class JanPaiViewFactory {
     
     /**
      * 面子ビューを生成 (チー)
+     * 
+     * @param source 面子。
+     * @param menTsuID 面子ID。
+     * @param layoutParam レイアウトパラメータ。nullを許可する。
+     * @return 面子構成牌ビュー。
      */
-    private List<ImageView> createChiView(final List<JanPai> source, final int menTsuID, final LinearLayout.LayoutParams layoutParam) {
-        final List<ImageView> result = new ArrayList<ImageView>();
+    private LinearLayout createChiView(final List<JanPai> source, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
+        final List<ImageView> resultList = new ArrayList<ImageView>();
         final int sourceSize = source.size();
         for (int i = 0; i < sourceSize; i++) {
             final JanPai pai = source.get(i);
@@ -220,10 +252,20 @@ public class JanPaiViewFactory {
                 image = ImageResourceManager.getInstance().getOpenImage(pai);
                 break;
             }
-            final ImageView view = createJanPaiView(menTsuID, image, layoutParam);
-            result.add(view);
+            final ImageView view = createImageView(image);
+            resultList.add(view);
         }
-        return result;
+        return createMenTsuLayout(resultList, menTsuID, layoutParam);
+    }
+    
+    /**
+     * イメージビューを生成
+     * 
+     * @param image 元画像。
+     * @return イメージビュー。
+     */
+    private ImageView createImageView(final Bitmap image) {
+        return createImageView(image, null);
     }
     
     /**
@@ -233,14 +275,19 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。nullを許可する。
      * @return イメージビュー。
      */
-    private ImageView createImageView(final Bitmap image, final LinearLayout.LayoutParams layoutParam) {
+    private ImageView createImageView(final Bitmap image, final RelativeLayout.LayoutParams layoutParam) {
         final ImageView view = new ImageView(_parent);
         if (layoutParam != null) {
             view.setLayoutParams(layoutParam);
         }
+        else {
+            final LinearLayout.LayoutParams param =
+                new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            view.setLayoutParams(param);
+        }
+        
         view.setImageBitmap(image);
         view.setAdjustViewBounds(true);  // 縦横比を維持
-        view.setScaleType(ScaleType.FIT_END);
         return view;
     }
     
@@ -250,7 +297,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。nullを許可する。
      * @return 不可視牌ビュー。
      */
-    private ImageView createInvisibleJanPaiViewCore(final LinearLayout.LayoutParams layoutParam) {
+    private ImageView createInvisibleJanPaiViewCore(final RelativeLayout.LayoutParams layoutParam) {
         final Bitmap image = ImageResourceManager.getInstance().getBlankImage();
         final ImageView view = createImageView(image, layoutParam);
         view.setVisibility(View.INVISIBLE);
@@ -263,18 +310,18 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。nullを許可する。
      * @return 不可視面子ビュー。
      */
-    private List<ImageView> createInvisibleMenTsuViewCore(final LinearLayout.LayoutParams layoutParam) {
-        final List<ImageView> result = new ArrayList<ImageView>();
+    private LinearLayout createInvisibleMenTsuViewCore(final RelativeLayout.LayoutParams layoutParam) {
+        final List<ImageView> resultList = new ArrayList<ImageView>();
         final Bitmap paiImage = ImageResourceManager.getInstance().getOpenBlankImage();
         final Bitmap paiStackImage = ImageResourceManager.getInstance().getStackBlankImage();
-        result.add(createImageView(paiImage, layoutParam));
-        result.add(createImageView(paiStackImage, layoutParam));
-        result.add(createImageView(paiImage, layoutParam));
+        resultList.add(createImageView(paiImage));
+        resultList.add(createImageView(paiStackImage));
+        resultList.add(createImageView(paiImage));
         
-        for (final ImageView view : result) {
+        for (final ImageView view : resultList) {
             view.setVisibility(View.INVISIBLE);
         }
-        return result;
+        return createMenTsuLayout(resultList, layoutParam);
     }
     
     /**
@@ -285,7 +332,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。nullを許可する。
      * @return 面子構成牌ビュー。
      */
-    private ImageView createJanPaiViewCore(final int viewID, final Bitmap image, final LinearLayout.LayoutParams layoutParam) {
+    private ImageView createJanPaiViewCore(final int viewID, final Bitmap image, final RelativeLayout.LayoutParams layoutParam) {
         final ImageView view = createImageView(image, layoutParam);
         view.setId(viewID);
         return view;
@@ -293,30 +340,73 @@ public class JanPaiViewFactory {
     
     /**
      * 面子ビューを生成 (暗カン)
+     * 
+     * @param source 面子。
+     * @param menTsuID 面子ID。
+     * @param layoutParam レイアウトパラメータ。nullを許可する。
+     * @return 面子構成牌ビュー。
      */
-    private List<ImageView> createKanDarkView(final List<JanPai> source, final int menTsuID, final LinearLayout.LayoutParams layoutParam) {
-        final List<ImageView> result = new ArrayList<ImageView>();
+    private LinearLayout createKanDarkView(final List<JanPai> source, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
+        final List<ImageView> resultList = new ArrayList<ImageView>();
         final JanPai pai = source.get(0);
         final Bitmap blankImage = ImageResourceManager.getInstance().getOpenBlankImage();
         final Bitmap paiStackImage = ImageResourceManager.getInstance().getStackImage(pai);
-        result.add(createJanPaiViewCore(menTsuID, blankImage, layoutParam));
-        result.add(createJanPaiView(menTsuID, paiStackImage, layoutParam));
-        result.add(createJanPaiViewCore(menTsuID, blankImage, layoutParam));
-        return result;
+        resultList.add(createImageView(blankImage));
+        resultList.add(createImageView(paiStackImage));
+        resultList.add(createImageView(blankImage));
+        return createMenTsuLayout(resultList, menTsuID, layoutParam);
     }
     
     /**
      * 面子ビューを生成 (明カン)
+     * 
+     * @param source 面子。
+     * @param menTsuID 面子ID。
+     * @param layoutParam レイアウトパラメータ。nullを許可する。
+     * @return 面子構成牌ビュー。
      */
-    private List<ImageView> createKanLightView(final List<JanPai> source, final int menTsuID, final LinearLayout.LayoutParams layoutParam) {
-        final List<ImageView> result = new ArrayList<ImageView>();
+    private LinearLayout createKanLightView(final List<JanPai> source, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
+        final List<ImageView> resultList = new ArrayList<ImageView>();
         final JanPai pai = source.get(0);
         final Bitmap paiImage = ImageResourceManager.getInstance().getOpenImage(pai);
         final Bitmap paiStackImage = ImageResourceManager.getInstance().getStackImage(pai);
-        result.add(createJanPaiView(menTsuID, paiImage, layoutParam));
-        result.add(createJanPaiView(menTsuID, paiStackImage, layoutParam));
-        result.add(createJanPaiView(menTsuID, paiImage, layoutParam));
-        return result;
+        resultList.add(createImageView(paiImage));
+        resultList.add(createImageView(paiStackImage));
+        resultList.add(createImageView(paiImage));
+        return createMenTsuLayout(resultList, menTsuID, layoutParam);
+    }
+    
+    /**
+     * 面子レイアウトを生成
+     * 
+     * @param viewList 牌ビューのリスト。
+     * @param layoutParam レイアウトパラメータ。nullを許可する。
+     */
+    private LinearLayout createMenTsuLayout(final List<ImageView> viewList, final RelativeLayout.LayoutParams layoutParam) {
+        final LinearLayout layout = new LinearLayout(_parent);
+        if (layoutParam != null) {
+            layout.setLayoutParams(layoutParam);
+        }
+        layout.setGravity(Gravity.BOTTOM);
+        
+        for (final ImageView view : viewList) {
+            layout.addView(view);
+        }
+        return layout;
+    }
+    
+    /**
+     * 面子レイアウトを生成
+     * 
+     * @param viewList 牌ビューのリスト。
+     * @param menTsuID 面子ID。
+     * @param layoutParam レイアウトパラメータ。nullを許可する。
+     */
+    private LinearLayout createMenTsuLayout(final List<ImageView> viewList, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
+        final LinearLayout layout = createMenTsuLayout(viewList, layoutParam);
+        layout.setId(menTsuID);
+        layout.setGravity(Gravity.BOTTOM);
+        return layout;
     }
     
     /**
@@ -327,7 +417,7 @@ public class JanPaiViewFactory {
      * @param layoutParam レイアウトパラメータ。nullを許可する。
      * @return 面子ビュー。
      */
-    private List<ImageView> createMenTsuViewCore(final MenTsu menTsu, final int menTsuID, final LinearLayout.LayoutParams layoutParam) {
+    private LinearLayout createMenTsuViewCore(final MenTsu menTsu, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
         final List<JanPai> source = menTsu.getSource();
         switch (menTsu.getMenTsuType()) {
         case CHI:
@@ -345,16 +435,21 @@ public class JanPaiViewFactory {
     
     /**
      * 面子ビューを生成 (ポン)
+     * 
+     * @param source 面子。
+     * @param menTsuID 面子ID。
+     * @param layoutParam レイアウトパラメータ。nullを許可する。
+     * @return 面子構成牌ビュー。
      */
-    private List<ImageView> createPonView(final List<JanPai> source, final int menTsuID, final LinearLayout.LayoutParams layoutParam) {
-        final List<ImageView> result = new ArrayList<ImageView>();
+    private LinearLayout createPonView(final List<JanPai> source, final int menTsuID, final RelativeLayout.LayoutParams layoutParam) {
+        final List<ImageView> resultList = new ArrayList<ImageView>();
         final JanPai pai = source.get(0);
         final Bitmap paiImage = ImageResourceManager.getInstance().getOpenImage(pai);
         final Bitmap paiRotateImage = ImageResourceManager.getInstance().getRotateImage(pai);
-        result.add(createJanPaiView(menTsuID, paiRotateImage, layoutParam));
-        result.add(createJanPaiView(menTsuID, paiImage, layoutParam));
-        result.add(createJanPaiView(menTsuID, paiImage, layoutParam));
-        return result;
+        resultList.add(createImageView(paiRotateImage));
+        resultList.add(createImageView(paiImage));
+        resultList.add(createImageView(paiImage));
+        return createMenTsuLayout(resultList, menTsuID, layoutParam);
     }
     
     
