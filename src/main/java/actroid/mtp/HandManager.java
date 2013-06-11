@@ -263,7 +263,7 @@ public final class HandManager extends Observable {
     private RelativeLayout.LayoutParams createFixedMenTsuViewParam(final int baseID) {
         final RelativeLayout.LayoutParams param =
             new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-                                          LayoutParams.WRAP_CONTENT);
+                                            LayoutParams.WRAP_CONTENT);
         param.addRule(RelativeLayout.LEFT_OF, baseID);
         param.addRule(RelativeLayout.ALIGN_BOTTOM, baseID);
         return param;
@@ -283,7 +283,7 @@ public final class HandManager extends Observable {
         
         final RelativeLayout.LayoutParams param =
             new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-                                          LayoutParams.WRAP_CONTENT);
+                                            LayoutParams.WRAP_CONTENT);
         if (index != 0) {
             param.addRule(RelativeLayout.RIGHT_OF, handID - 1);
         }
@@ -308,7 +308,7 @@ public final class HandManager extends Observable {
         final JanPaiViewFactory factory = createJanPaiViewFactory();
         final RelativeLayout.LayoutParams layoutParam =
             new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-                                          LayoutParams.WRAP_CONTENT);
+                                            LayoutParams.WRAP_CONTENT);
         layoutParam.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
         final int viewID = MTPConst.FIXED_VIEW_MAIN_BASE_ID - 1;
         return factory.createMenTsuMinHeightDummyView(viewID, layoutParam);

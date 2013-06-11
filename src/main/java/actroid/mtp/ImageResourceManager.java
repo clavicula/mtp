@@ -185,9 +185,8 @@ public final class ImageResourceManager {
         initializeStackResourceID();
         
         final Resources core = activity.getResources();
-        final double targetWidth = getDisplayShortEdge(activity) / 18.0;
-        final double sourceWidth = getJanPaiWidth(core);
-        final double scale = targetWidth / sourceWidth;
+        final double targetWidth = getDisplayShortEdge(activity) / 15.0;
+        final double scale = targetWidth / JAN_PAI_WIDTH;
         
         for (final Map.Entry<JanPai, Integer> entry : _resourceIDMap.entrySet()) {
             final int resourceID = entry.getValue();
@@ -230,7 +229,7 @@ public final class ImageResourceManager {
     
     
     /**
-     * ディスプレイ短辺を取得
+     * ディスプレイ短辺を取得 [px]
      * 
      * @param activity 画面。
      * @return ディスプレイ短辺。
@@ -239,18 +238,9 @@ public final class ImageResourceManager {
         final WindowManager window =
             (WindowManager)activity.getSystemService(Context.WINDOW_SERVICE);
         final Display display = window.getDefaultDisplay();
-        return Math.min(display.getWidth(), display.getHeight());
-    }
-    
-    /**
-     * 牌の横幅を取得
-     * 
-     * @param core リソースコア。
-     * @return 牌の横幅。
-     */
-    private double getJanPaiWidth(final Resources core) {
-        final Bitmap pai = BitmapFactory.decodeResource(core, R.drawable.ura);
-        return pai.getWidth();
+        final double base = Math.min(display.getWidth(), display.getHeight());
+        final double margin = activity.getResources().getDimensionPixelSize(R.dimen.activity_horizontal_margin) * 2;
+        return base - margin;
     }
     
     /**
@@ -427,19 +417,24 @@ public final class ImageResourceManager {
                               final double scale,
                               final boolean rotated) {
         final Bitmap image = BitmapFactory.decodeResource(core, resourceID);
-        if (!rotated) {
-            if (Double.compare(scale, 1.0) >= 0) {
+        final boolean bigger = Double.compare(scale, 1.0) >= 0;
+        double trimmedScale = bigger ? 1.0 : scale;
+        if (rotated) {
+            trimmedScale *= 0.925;
+        }
+        else {
+            if (bigger) {
+                // 回転無し＆縮小不要
                 return image;
             }
         }
-        double targetWidth = image.getWidth() * scale;
-        double targetHeight = image.getHeight() * scale;
-        if (rotated) {
-            // 横向きの牌に対するサイズ補正
-            targetWidth *= 0.925;
-            targetHeight *= 0.925;
-        }
-        return Bitmap.createScaledBitmap(image, (int)targetWidth, (int)targetHeight, true);
+        
+        // inSampleSizeで縮小するとブレが大きく、目的のサイズよりかなり小さくなるので採用しない
+        final double targetWidth = image.getWidth() * trimmedScale;
+        final double targetHeight = image.getHeight() * trimmedScale;
+        final Bitmap result = Bitmap.createScaledBitmap(image, (int)targetWidth, (int)targetHeight, true);
+        image.recycle();
+        return result;
     }
     
     
@@ -448,6 +443,11 @@ public final class ImageResourceManager {
      * 自分自身のインスタンス
      */
     private static final ImageResourceManager INSTANCE = new ImageResourceManager();
+    
+    /**
+     * 雀牌の横幅 [px]
+     */
+    private static final int JAN_PAI_WIDTH = 48;
     
     
     
