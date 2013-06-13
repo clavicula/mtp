@@ -149,6 +149,15 @@ public final class MainActivity extends Activity implements Observer {
     }
     
     /**
+     * 画面破棄時の処理
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        HandManager.getInstance().deleteObserver(this);
+    }
+    
+    /**
      * 画面リロード時の状態保存
      */
     @Override
@@ -222,7 +231,7 @@ public final class MainActivity extends Activity implements Observer {
      * 手牌ビューを初期化
      */
     private void initializeHandView() {
-        HandManager.getInstance().initialize(this);
+        HandManager.getInstance().setParent(this);
         HandManager.getInstance().addObserver(this);
         HandManager.getInstance().updateView();
     }

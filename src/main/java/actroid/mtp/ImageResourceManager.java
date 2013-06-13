@@ -179,50 +179,58 @@ public final class ImageResourceManager {
             throw new NullPointerException("Source activity is null.");
         }
         
-        initializeResourceID();
-        initializeOpenResourceID();
-        initializeRotateResourceID();
-        initializeStackResourceID();
-        
-        final Resources core = activity.getResources();
-        final double targetWidth = getDisplayShortEdge(activity) / 15.0;
-        final double scale = targetWidth / JAN_PAI_WIDTH;
-        
-        for (final Map.Entry<JanPai, Integer> entry : _resourceIDMap.entrySet()) {
-            final int resourceID = entry.getValue();
-            final Bitmap resource = readImage(core, resourceID, scale, false);
-            _resourceMap.put(entry.getKey(), resource);
-        }
-        for (final Map.Entry<JanPai, Integer> entry : _openIDMap.entrySet()) {
-            final int resourceID = entry.getValue();
-            final Bitmap resource = readImage(core, resourceID, scale, false);
-            _openMap.put(entry.getKey(), resource);
-        }
-        for (final Map.Entry<JanPai, Integer> entry : _rotateIDMap.entrySet()) {
-            final int resourceID = entry.getValue();
-            final Bitmap resource = readImage(core, resourceID, scale, true);
-            _rotateMap.put(entry.getKey(), resource);
-        }
-        for (final Map.Entry<JanPai, Integer> entry : _stackIDMap.entrySet()) {
-            final int resourceID = entry.getValue();
-            final Bitmap resource = readImage(core, resourceID, scale, true);
-            _stackMap.put(entry.getKey(), resource);
-        }
-        
-        synchronized (_BLANK_RESOURCE_LOCK) {
-            _blankResource = readImage(core, R.drawable.ura, scale, false);
-        }
-        synchronized (_BLANK_OPEN_RESOURCE_LOCK) {
-            _blankOpenResource = readImage(core, R.drawable.ura_open, scale, false);
-        }
-        synchronized (_BLANK_ROTATE_RESOURCE_LOCK) {
-            _blankRotateResource = readImage(core, R.drawable.ura_yoko, scale, true);
-        }
-        synchronized (_BLANK_STACK_RESOURCE_LOCK) {
-            _blankStackResource = readImage(core, R.drawable.ura_kan, scale, true);
-            final int height = _blankStackResource.getHeight();
-            _stackHeightDummy =
-                Bitmap.createScaledBitmap(_blankStackResource, 1, height, true);
+        synchronized (_INITIALIZE_LOCK) {
+            if (_initialized) {
+                return;
+            }
+            
+            initializeResourceID();
+            initializeOpenResourceID();
+            initializeRotateResourceID();
+            initializeStackResourceID();
+            
+            final Resources core = activity.getResources();
+            final double targetWidth = getDisplayShortEdge(activity) / 15.0;
+            final double scale = targetWidth / JAN_PAI_WIDTH;
+            
+            for (final Map.Entry<JanPai, Integer> entry : _resourceIDMap.entrySet()) {
+                final int resourceID = entry.getValue();
+                final Bitmap resource = readImage(core, resourceID, scale, false);
+                _resourceMap.put(entry.getKey(), resource);
+            }
+            for (final Map.Entry<JanPai, Integer> entry : _openIDMap.entrySet()) {
+                final int resourceID = entry.getValue();
+                final Bitmap resource = readImage(core, resourceID, scale, false);
+                _openMap.put(entry.getKey(), resource);
+            }
+            for (final Map.Entry<JanPai, Integer> entry : _rotateIDMap.entrySet()) {
+                final int resourceID = entry.getValue();
+                final Bitmap resource = readImage(core, resourceID, scale, true);
+                _rotateMap.put(entry.getKey(), resource);
+            }
+            for (final Map.Entry<JanPai, Integer> entry : _stackIDMap.entrySet()) {
+                final int resourceID = entry.getValue();
+                final Bitmap resource = readImage(core, resourceID, scale, true);
+                _stackMap.put(entry.getKey(), resource);
+            }
+            
+            synchronized (_BLANK_RESOURCE_LOCK) {
+                _blankResource = readImage(core, R.drawable.ura, scale, false);
+            }
+            synchronized (_BLANK_OPEN_RESOURCE_LOCK) {
+                _blankOpenResource = readImage(core, R.drawable.ura_open, scale, false);
+            }
+            synchronized (_BLANK_ROTATE_RESOURCE_LOCK) {
+                _blankRotateResource = readImage(core, R.drawable.ura_yoko, scale, true);
+            }
+            synchronized (_BLANK_STACK_RESOURCE_LOCK) {
+                _blankStackResource = readImage(core, R.drawable.ura_kan, scale, true);
+                final int height = _blankStackResource.getHeight();
+                _stackHeightDummy =
+                    Bitmap.createScaledBitmap(_blankStackResource, 1, height, true);
+            }
+            
+            _initialized = true;
         }
     }
     
@@ -452,6 +460,11 @@ public final class ImageResourceManager {
     
     
     /**
+     * ロックオブジェクト (初期化)
+     */
+    private final Object _INITIALIZE_LOCK = new Object();
+    
+    /**
      * ロックオブジェクト (牌裏)
      */
     private final Object _BLANK_RESOURCE_LOCK = new Object();
@@ -477,6 +490,11 @@ public final class ImageResourceManager {
     private final Object _STACK_HEIGHT_DUMMY_LOCK = new Object();
     
     
+    
+    /**
+     * 初期化済みフラグ
+     */
+    private volatile boolean _initialized = false;
     
     /**
      * リソースIDマッピング

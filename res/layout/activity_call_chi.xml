@@ -28,7 +28,6 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="@dimen/pai_max_height"
 		        android:layout_marginTop="20dp"
-		        android:layout_marginRight="@dimen/scroll_field_right_margin"
 		        android:orientation="horizontal" >
 		        
 		        <ImageButton
@@ -129,7 +128,6 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="@dimen/pai_max_height"
 		        android:layout_marginTop="10dp"
-		        android:layout_marginRight="@dimen/scroll_field_right_margin"
 		        android:orientation="horizontal" >
 		        
 		        <ImageButton
@@ -230,7 +228,6 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="@dimen/pai_max_height"
 		        android:layout_marginTop="10dp"
-		        android:layout_marginRight="@dimen/scroll_field_right_margin"
 		        android:orientation="horizontal" >
 		        
 		        <ImageButton
@@ -331,7 +328,6 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="@dimen/pai_max_height"
 		        android:layout_marginTop="10dp"
-		        android:layout_marginRight="@dimen/scroll_field_right_margin"
 		        android:orientation="horizontal" >
 		        
 		        <ImageButton
@@ -433,7 +429,6 @@
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
 		        android:layout_marginTop="30dp"
-		        android:layout_marginRight="@dimen/scroll_field_right_margin"
 		        android:layout_marginBottom="10dp"
 		        android:text="@string/button_call_cancel" />
 		    

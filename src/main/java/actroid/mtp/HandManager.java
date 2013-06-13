@@ -170,21 +170,6 @@ public final class HandManager extends Observable {
     }
     
     /**
-     * 初期化処理
-     * 
-     * @param activity 親画面。
-     */
-    public void initialize(final Activity activity) {
-        if (activity == null) {
-            throw new NullPointerException("Parent activity is null.");
-        }
-        
-        synchronized (_PARENT_LOCK) {
-            _parent = activity;
-        }
-    }
-    
-    /**
      * 牌裏か
      * 
      * @param viewID ビューID。
@@ -250,6 +235,21 @@ public final class HandManager extends Observable {
             notifyObservers(_hand.clone());
         }
         clearChanged();
+    }
+    
+    /**
+     * 親画面を設定
+     * 
+     * @param activity 親画面。
+     */
+    public void setParent(final Activity activity) {
+        if (activity == null) {
+            throw new NullPointerException("Parent activity is null.");
+        }
+        
+        synchronized (_PARENT_LOCK) {
+            _parent = activity;
+        }
     }
     
     
